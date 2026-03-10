@@ -916,9 +916,9 @@ for i in range(10):
     # Верни строку вида: "Hello, Anna! You are 23 years old."
     pass
 
-# Тест
-print(greeting("Anna", 23))
-print(greeting("Ivan", 30))`,
+# Тест — раскомментируй чтобы проверить:
+# print(greeting("Anna", 23))
+# print(greeting("Ivan", 30))`,
         tests: [
           { input: ['Anna', 23], expected: 'Hello, Anna! You are 23 years old.' },
           { input: ['Ivan', 30], expected: 'Hello, Ivan! You are 30 years old.' },
@@ -942,9 +942,9 @@ print(greeting("Ivan", 30))`,
     # Верни True если n чётное
     pass
 
-print(is_even(4))   # True
-print(is_even(7))   # False
-print(is_even(0))   # True`,
+# print(is_even(4))   # True
+# print(is_even(7))   # False
+# print(is_even(0))   # True`,
         validate: (fn) => {
           for (const n of [0,2,4,100]) if (fn(n) !== true) return {ok:false, msg:`is_even(${n}) должно быть True`};
           for (const n of [1,3,7,99]) if (fn(n) !== false) return {ok:false, msg:`is_even(${n}) должно быть False`};
@@ -959,8 +959,8 @@ print(is_even(0))   # True`,
     # Реализуй калькулятор
     pass
 
-print(calculator(10, 5, "+"))   # 15
-print(calculator(10, 0, "/"))   # None`,
+# print(calculator(10, 5, "+"))   # 15
+# print(calculator(10, 0, "/"))   # None`,
         validate: (fn) => {
           if (fn(3,4,'+') !== 7) return {ok:false, msg:'calculator(3,4,"+") должно быть 7'};
           if (fn(10,2,'/') !== 5) return {ok:false, msg:'calculator(10,2,"/") должно быть 5'};
@@ -976,9 +976,9 @@ print(calculator(10, 0, "/"))   # None`,
         starter: `def letter_grade(score: int) -> str:
     pass
 
-print(letter_grade(95))   # A
-print(letter_grade(82))   # B
-print(letter_grade(55))   # F`,
+# print(letter_grade(95))   # A
+# print(letter_grade(82))   # B
+# print(letter_grade(55))   # F`,
         validate: (fn) => {
           const cases = [[95,'A'],[89,'B'],[75,'C'],[60,'D'],[59,'F'],[0,'F'],[100,'A']];
           for (const [s,e] of cases) if (fn(s)!==e) return {ok:false,msg:`letter_grade(${s}) → "${fn(s)}", ожидалось "${e}"`};
@@ -992,8 +992,8 @@ print(letter_grade(55))   # F`,
         starter: `def sum_to(n: int) -> int:
     pass
 
-print(sum_to(5))    # 15
-print(sum_to(100))  # 5050`,
+# print(sum_to(5))    # 15
+# print(sum_to(100))  # 5050`,
         validate: (fn) => {
           if (fn(1)!==1) return {ok:false,msg:'sum_to(1) должно быть 1'};
           if (fn(5)!==15) return {ok:false,msg:'sum_to(5) должно быть 15'};
@@ -1008,8 +1008,8 @@ print(sum_to(100))  # 5050`,
         starter: `def count_even(a: int, b: int) -> int:
     pass
 
-print(count_even(1, 10))  # 5  (2,4,6,8,10)
-print(count_even(0, 10))  # 6  (0,2,4,6,8,10)`,
+# print(count_even(1, 10))  # 5  (2,4,6,8,10)
+# print(count_even(0, 10))  # 6  (0,2,4,6,8,10)`,
         validate: (fn) => {
           if (fn(1,10)!==5) return {ok:false,msg:'count_even(1,10) должно быть 5'};
           if (fn(0,10)!==6) return {ok:false,msg:'count_even(0,10) должно быть 6'};
@@ -1024,7 +1024,7 @@ print(count_even(0, 10))  # 6  (0,2,4,6,8,10)`,
         starter: `def fizzbuzz(n: int) -> list:
     pass
 
-print(fizzbuzz(15))
+# print(fizzbuzz(15))
 # [1,2,'Fizz',4,'Buzz','Fizz',7,8,'Fizz','Buzz',11,'Fizz',13,14,'FizzBuzz']`,
         validate: (fn) => {
           const r = fn(15);
@@ -1045,7 +1045,7 @@ print(fizzbuzz(15))
     # n=4 → "*\\n**\\n***\\n****"
     pass
 
-print(triangle(4))`,
+# print(triangle(4))`,
         validate: (fn) => {
           const r = fn(4);
           if (typeof r !== 'string') return {ok:false,msg:'Верни строку, не используй print()'};
@@ -1122,8 +1122,8 @@ print(f"{'Left':<15}|{'Right':>15}")# выравнивание</code></pre>
         starter: `def reverse_string(s: str) -> str:
     pass
 
-print(reverse_string("Python"))  # nohtyP
-print(reverse_string("hello"))   # olleh`,
+# print(reverse_string("Python"))  # nohtyP
+# print(reverse_string("hello"))   # olleh`,
         validate: (fn) => {
           if (fn("Python")!=="nohtyP") return {ok:false,msg:'reverse_string("Python") должно быть "nohtyP"'};
           if (fn("")!=="") return {ok:false,msg:'reverse_string("") должно быть ""'};
@@ -1138,9 +1138,9 @@ print(reverse_string("hello"))   # olleh`,
         starter: `def is_palindrome(s: str) -> bool:
     pass
 
-print(is_palindrome("racecar"))  # True
-print(is_palindrome("hello"))    # False
-print(is_palindrome("A man a plan a canal Panama"))  # True`,
+# print(is_palindrome("racecar"))  # True
+# print(is_palindrome("hello"))    # False
+# print(is_palindrome("A man a plan a canal Panama"))  # True`,
         validate: (fn) => {
           if (fn("racecar")!==true) return {ok:false,msg:'"racecar" — палиндром'};
           if (fn("level")!==true) return {ok:false,msg:'"level" — палиндром'};
@@ -1156,9 +1156,9 @@ print(is_palindrome("A man a plan a canal Panama"))  # True`,
         starter: `def count_vowels(s: str) -> int:
     pass
 
-print(count_vowels("hello"))   # 2
-print(count_vowels("HELLO"))   # 2
-print(count_vowels("bcdf"))    # 0`,
+# print(count_vowels("hello"))   # 2
+# print(count_vowels("HELLO"))   # 2
+# print(count_vowels("bcdf"))    # 0`,
         validate: (fn) => {
           if (fn("hello")!==2) return {ok:false,msg:'count_vowels("hello") = 2'};
           if (fn("HELLO")!==2) return {ok:false,msg:'Должен игнорировать регистр'};
@@ -1174,8 +1174,8 @@ print(count_vowels("bcdf"))    # 0`,
         starter: `def title_case(s: str) -> str:
     pass
 
-print(title_case("hello world"))      # Hello World
-print(title_case("python is great"))  # Python Is Great`,
+# print(title_case("hello world"))      # Hello World
+# print(title_case("python is great"))  # Python Is Great`,
         validate: (fn) => {
           if (fn("hello world")!=="Hello World") return {ok:false,msg:'"hello world" → "Hello World"'};
           if (fn("python is great")!=="Python Is Great") return {ok:false,msg:'"python is great" → "Python Is Great"'};
@@ -1189,7 +1189,7 @@ print(title_case("python is great"))  # Python Is Great`,
         starter: `def remove_spaces(s: str) -> str:
     pass
 
-print(remove_spaces("h e l l o"))  # hello`,
+# print(remove_spaces("h e l l o"))  # hello`,
         validate: (fn) => {
           if (fn("h e l l o")!=="hello") return {ok:false,msg:'"h e l l o" → "hello"'};
           if (fn("   ")!=="") return {ok:false,msg:'"   " → ""'};
@@ -1203,7 +1203,7 @@ print(remove_spaces("h e l l o"))  # hello`,
         starter: `def unique_words(s: str) -> list:
     pass
 
-print(unique_words("yes no yes maybe no"))
+# print(unique_words("yes no yes maybe no"))
 # ['yes', 'no', 'maybe']`,
         validate: (fn) => {
           const r = fn("yes no yes maybe no");
@@ -1220,8 +1220,8 @@ print(unique_words("yes no yes maybe no"))
         starter: `def acronym(phrase: str) -> str:
     pass
 
-print(acronym("as soon as possible"))  # ASAP
-print(acronym("Python Is Great"))      # PIG`,
+# print(acronym("as soon as possible"))  # ASAP
+# print(acronym("Python Is Great"))      # PIG`,
         validate: (fn) => {
           if (fn("as soon as possible")!=="ASAP") return {ok:false,msg:'"as soon as possible" → "ASAP"'};
           if (fn("Python Is Great")!=="PIG") return {ok:false,msg:'"Python Is Great" → "PIG"'};
@@ -1235,8 +1235,8 @@ print(acronym("Python Is Great"))      # PIG`,
         starter: `def censor(text: str, banned: list) -> str:
     pass
 
-print(censor("bad word here", ["bad"]))    # *** word here
-print(censor("hello world", ["world"]))    # hello *****`,
+# print(censor("bad word here", ["bad"]))    # *** word here
+# print(censor("hello world", ["world"]))    # hello *****`,
         validate: (fn) => {
           if (fn("bad word here",["bad"])!=="*** word here") return {ok:false,msg:'"bad" → "***"'};
           if (fn("hello world",["world"])!=="hello *****") return {ok:false,msg:'"world" → "*****"'};
@@ -1254,7 +1254,7 @@ import string
 def generate_password(length: int = 12) -> str:
     pass
 
-print(generate_password(16))`,
+# print(generate_password(16))`,
         validate: (fn) => {
           const p = fn(16);
           if (typeof p !== 'string') return {ok:false,msg:'Должна вернуть строку'};
@@ -1982,11 +1982,10 @@ async function runCode() {
     setStatus(hasErr ? 'err' : 'ok', hasErr ? 'error' : 'done');
     if (!hasErr) runValidation(code);
   } catch(e) {
-    // Красиво форматируем traceback
-    const msg = e.message || String(e);
-    // Берём последние строки — они самые важные
-    const lines = msg.split('\n').filter(l => l.trim());
-    lines.forEach(l => appendOutput(l, 'error'));
+    // Берём только суть — последние строки traceback
+    const msg = (e.message || String(e)).split('\n').filter(l => l.trim());
+    const short = msg.length > 4 ? msg.slice(-3) : msg;
+    short.forEach(l => appendOutput(l, 'error'));
     setStatus('err', 'error');
   } finally {
     btn.disabled = false;
@@ -2026,7 +2025,13 @@ async function runTestsAsync(fullCode, mod) {
       appendOutput('');
       appendOutput('✗  ' + result, 'error');
     }
-  } catch(e) { /* тихо */ }
+  } catch(e) {
+    // Ошибка в тесте — показываем пользователю
+    const msg = (e.message || String(e)).split('\n').filter(l => l.trim());
+    const short = msg.length > 4 ? ['...', ...msg.slice(-3)] : msg;
+    appendOutput('');
+    short.forEach(l => appendOutput('✗  ' + l, 'error'));
+  }
 }
 
 function getTaskTests(fnName) {
