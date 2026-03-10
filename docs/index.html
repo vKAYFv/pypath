@@ -10,8 +10,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
 <!-- Pyodide — настоящий CPython в браузере -->
-<script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython_stdlib.js"></script>
 
 
 
@@ -1911,27 +1909,16 @@ function selectTask(idx) {
 }
 
 // ══════════════════════════════════════════════════════
-// PYTHON RUNNER — Brython в изолированном iframe
+// PYTHON RUNNER — Piston API (реальный CPython на сервере)
 // ══════════════════════════════════════════════════════
+// Piston — бесплатный публичный API, никакой регистрации
+// https://github.com/engineer-man/piston
 
-window.addEventListener('load', () => {
-  // Brython грузится в head — проверяем готовность
-  const btn = document.querySelector('.run-btn');
-  const checkReady = setInterval(() => {
-    if (typeof brython !== 'undefined') {
-      clearInterval(checkReady);
-      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Запустить';
-      btn.disabled = false;
-    }
-  }, 100);
-  setTimeout(() => {
-    clearInterval(checkReady);
-    if (btn.disabled) btn.innerHTML = '❌ Нет соединения';
-  }, 8000);
-});
+const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
 
 function clearOutput() {
-  document.getElementById('output-content').innerHTML = '<span class="out-line info">// Нажми ▶ Запустить  (Ctrl+Enter)</span>';
+  document.getElementById('output-content').innerHTML =
+    '<span class="out-line info">// Нажми ▶ Запустить  (Ctrl+Enter)</span>';
   setStatus('idle', 'idle');
 }
 
@@ -1953,112 +1940,59 @@ function appendOutput(text, cls) {
   el.scrollTop = el.scrollHeight;
 }
 
-function runPython(code, callback) {
-  const old = document.getElementById('py-runner-frame');
-  if (old) old.remove();
-
-  const iframe = document.createElement('iframe');
-  iframe.id = 'py-runner-frame';
-  iframe.setAttribute('sandbox', 'allow-scripts');
-  iframe.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;top:-9999px';
-  document.body.appendChild(iframe);
-
-  // Кодируем код пользователя в base64 чтобы избежать проблем с кавычками
-  const b64code = btoa(unescape(encodeURIComponent(code)));
-
-  const html = [
-    '<!DOCTYPE html><html><head>',
-    '<script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython.min.js"><\/script>',
-    '<script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython_stdlib.js"><\/script>',
-    '</head><body>',
-    '<script type="text/python" id="runner">',
-    'import sys, base64',
-    'from browser import window',
-    '',
-    'captured = []',
-    'errors = []',
-    '',
-    'class Out:',
-    '    def __init__(self, store): self.store = store; self.buf = ""',
-    '    def write(self, s):',
-    '        self.buf += s',
-    '        while "\\n" in self.buf:',
-    '            idx = self.buf.index("\\n")',
-    '            self.store.append(self.buf[:idx])',
-    '            self.buf = self.buf[idx+1:]',
-    '    def flush(self):',
-    '        if self.buf: self.store.append(self.buf); self.buf = ""',
-    '',
-    'sys.stdout = Out(captured)',
-    'sys.stderr = Out(errors)',
-    '',
-    'b64 = "' + b64code + '"',
-    'code = base64.b64decode(b64).decode("utf-8")',
-    '',
-    'try:',
-    '    exec(code)',
-    '    sys.stdout.flush()',
-    '    sys.stderr.flush()',
-    '    window.pyDone("\\n".join(captured), False)',
-    'except Exception as e:',
-    '    sys.stdout.flush()',
-    '    sys.stderr.flush()',
-    '    import traceback',
-    '    window.pyDone(traceback.format_exc(), True)',
-    '<\/script>',
-    '<script>',
-    'window.pyDone = function(text, isError) {',
-    '    window.parent.postMessage({t:"pyResult",text:text,err:isError},"*");',
-    '};',
-    'window.onerror = function(msg){',
-    '    window.parent.postMessage({t:"pyResult",text:msg,err:true},"*");',
-    '};',
-    'window.onload = function(){ brython(); };',
-    '<\/script>',
-    '</body></html>'
-  ].join('\n');
-
-  let done = false;
-  const timeout = setTimeout(() => {
-    if (!done) { done = true; callback('Timeout: код выполнялся слишком долго', true); }
-  }, 12000);
-
-  function handler(e) {
-    if (e.data && e.data.t === 'pyResult' && !done) {
-      done = true;
-      clearTimeout(timeout);
-      window.removeEventListener('message', handler);
-      callback(e.data.text || '', e.data.err);
-    }
-  }
-  window.addEventListener('message', handler);
-
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
-  doc.open(); doc.write(html); doc.close();
+async function runPython(code) {
+  const res = await fetch(PISTON_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      language: 'python',
+      version: '3.10.0',
+      files: [{ name: 'main.py', content: code }],
+      stdin: '',
+      args: [],
+      compile_timeout: 10000,
+      run_timeout: 5000,
+    })
+  });
+  if (!res.ok) throw new Error('API недоступен: ' + res.status);
+  return await res.json();
 }
 
-function runCode() {
-  const btn = document.querySelector('.run-btn');
-  if (btn.disabled) { appendOutput('⏳ Подожди, Python ещё загружается...', 'info'); return; }
-
+async function runCode() {
   const code = document.getElementById('code-editor').value;
   if (!code.trim()) return;
 
+  const btn = document.querySelector('.run-btn');
+  btn.disabled = true;
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'running...');
-  btn.disabled = true;
 
-  runPython(code, function(output, isError) {
+  try {
+    const result = await runPython(code);
     btn.disabled = false;
-    if (isError) {
-      output.split('\n').filter(Boolean).forEach(function(l) { appendOutput(l, 'error'); });
+
+    const stdout = (result.run.stdout || '').trimEnd();
+    const stderr = (result.run.stderr || '').trimEnd();
+
+    if (stdout) {
+      stdout.split('\n').forEach(l => appendOutput(l));
+    }
+    if (stderr) {
+      stderr.split('\n').filter(Boolean).forEach(l => appendOutput(l, 'error'));
+    }
+
+    if (result.run.code !== 0 || stderr) {
       setStatus('err', 'error');
     } else {
-      output.split('\n').filter(Boolean).forEach(function(l) { appendOutput(l); });
       setStatus('ok', 'done');
       runValidation(code);
     }
-  });
+  } catch(e) {
+    btn.disabled = false;
+    appendOutput('⚠️  ' + e.message, 'error');
+    appendOutput('Проверь подключение к интернету', 'error');
+    setStatus('err', 'error');
+  }
 }
 
 // ── VALIDATION ─────────────────────────────────────────
@@ -2069,12 +2003,17 @@ function runValidation(code) {
   const fnName = task.name.replace('()', '');
   const tests = getTaskTests(fnName);
   if (!tests) return;
+  runTestsAsync(code + '\n' + tests, mod);
+}
 
-  runPython(code + '\n' + tests, function(output, isError) {
-    if (isError) return;
-    const lines = output.trim().split('\n');
-    const result = lines[lines.length - 1];
-    if (result === 'ALL_PASS') {
+async function runTestsAsync(fullCode, mod) {
+  try {
+    const result = await runPython(fullCode);
+    const out = (result.run.stdout || '').trim();
+    const lines = out.split('\n');
+    const last = lines[lines.length - 1];
+
+    if (last === 'ALL_PASS') {
       appendOutput('');
       appendOutput('══════════════════════', 'success');
       appendOutput('✓  Все тесты пройдены!', 'success');
@@ -2084,31 +2023,33 @@ function runValidation(code) {
       renderTasks();
       showToast('✓ Задача решена!', 'success');
       confetti();
-    } else if (result && result !== '') {
+    } else if (last) {
       appendOutput('');
-      appendOutput('✗  ' + result, 'error');
+      appendOutput('✗  ' + last, 'error');
     }
-  });
+  } catch(e) {
+    // тихо — валидация не критична
+  }
 }
 
 function getTaskTests(fnName) {
   const T = {
     greeting:
-`\ntry:\n    assert greeting("Anna",23)=="Hello, Anna! You are 23 years old.",str(greeting("Anna",23))\n    assert greeting("Ivan",30)=="Hello, Ivan! You are 30 years old."\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    assert greeting("Anna",23)=="Hello, Anna! You are 23 years old.",repr(greeting("Anna",23))\n    assert greeting("Ivan",30)=="Hello, Ivan! You are 30 years old."\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     is_even:
-`\ntry:\n    for n in [0,2,4,100]: assert is_even(n)==True,f"is_even({n}) должно быть True"\n    for n in [1,3,7,99]: assert is_even(n)==False,f"is_even({n}) должно быть False"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    for n in [0,2,4,100]: assert is_even(n)==True,f"is_even({n}) должно быть True, получили {is_even(n)}"\n    for n in [1,3,7,99]: assert is_even(n)==False,f"is_even({n}) должно быть False"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     calculator:
-`\ntry:\n    assert calculator(3,4,"+")==7\n    assert calculator(10,2,"/")==5.0\n    assert calculator(5,6,"*")==30\n    assert calculator(10,3,"-")==7\n    assert calculator(10,0,"/")==None,str(calculator(10,0,"/"))\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    assert calculator(3,4,"+")==7,f"3+4={calculator(3,4,'+')}"\n    assert calculator(10,2,"/")==5.0\n    assert calculator(5,6,"*")==30\n    assert calculator(10,3,"-")==7\n    assert calculator(10,0,"/")==None,f"10/0={calculator(10,0,'/')}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     letter_grade:
-`\ntry:\n    for s,e in [(95,"A"),(89,"B"),(75,"C"),(65,"D"),(55,"F"),(100,"A")]:\n        assert letter_grade(s)==e,f"letter_grade({s})={letter_grade(s)}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    for s,e in [(95,"A"),(89,"B"),(75,"C"),(65,"D"),(55,"F"),(100,"A")]:\n        r=letter_grade(s); assert r==e,f"letter_grade({s})={r}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     sum_to:
 `\ntry:\n    assert sum_to(1)==1\n    assert sum_to(5)==15,f"sum_to(5)={sum_to(5)}"\n    assert sum_to(100)==5050\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     count_even:
-`\ntry:\n    assert count_even(1,10)==5,f"count_even(1,10)={count_even(1,10)}"\n    assert count_even(0,10)==6\n    assert count_even(1,1)==0\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    assert count_even(1,10)==5,f"={count_even(1,10)}"\n    assert count_even(0,10)==6,f"={count_even(0,10)}"\n    assert count_even(1,1)==0\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     fizzbuzz:
-`\ntry:\n    r=fizzbuzz(15)\n    assert isinstance(r,list)\n    assert r[0]==1,f"r[0]={r[0]}"\n    assert r[2]=="Fizz",f"r[2]={r[2]}"\n    assert r[4]=="Buzz",f"r[4]={r[4]}"\n    assert r[14]=="FizzBuzz",f"r[14]={r[14]}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    r=fizzbuzz(15)\n    assert isinstance(r,list),"должен вернуть список"\n    assert r[0]==1,f"r[0]={r[0]}"\n    assert r[2]=="Fizz",f"r[2]={r[2]}"\n    assert r[4]=="Buzz",f"r[4]={r[4]}"\n    assert r[14]=="FizzBuzz",f"r[14]={r[14]}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     triangle:
-`\ntry:\n    r=triangle(4)\n    assert r is not None,"Верни строку (return)"\n    lines=r.strip().split("\\n")\n    assert len(lines)==4,f"Нужно 4 строки, получили {len(lines)}"\n    for i in range(4): assert lines[i].strip()=="*"*(i+1),f"Строка {i+1} неверна"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    r=triangle(4)\n    assert r is not None,"Верни строку (return), не используй только print()"\n    lines=r.strip().split("\\n")\n    assert len(lines)==4,f"Нужно 4 строки, получили {len(lines)}"\n    for i in range(4): assert lines[i].strip()=="*"*(i+1),f"Строка {i+1} неверна"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     reverse_string:
 `\ntry:\n    assert reverse_string("Python")=="nohtyP"\n    assert reverse_string("")==""\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     is_palindrome:
@@ -2148,7 +2089,7 @@ function getTaskTests(fnName) {
     invert_dict:
 `\ntry:\n    r=invert_dict({"a":1,"b":2})\n    assert r[1]=="a" and r[2]=="b"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     group_by_length:
-`\ntry:\n    r=group_by_length(["hi","bye","yo","hey"])\n    assert "hi" in r[2] and "yo" in r[2]\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    r=group_by_length(["hi","bye","yo","hey"])\n    assert "hi" in r[2] and "yo" in r[2]\n    assert "bye" in r[3] and "hey" in r[3]\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     common_elements:
 `\ntry:\n    assert sorted(common_elements([1,2,3,4],[3,4,5,6]))==[3,4]\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     most_frequent:
@@ -2174,10 +2115,15 @@ function confetti() {
     setTimeout(function() {
       const el = document.createElement('div');
       el.className = 'confetti-piece';
-      el.style.cssText = 'left:'+Math.random()*100+'vw;top:-10px;background:'+colors[Math.floor(Math.random()*colors.length)]+';border-radius:'+(Math.random()>0.5?'50%':'2px')+';animation-duration:'+(1+Math.random())+'s;animation-delay:'+Math.random()*0.3+'s;';
+      el.style.left = Math.random()*100+'vw';
+      el.style.top = '-10px';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.borderRadius = Math.random()>0.5?'50%':'2px';
+      el.style.animationDuration = (1+Math.random())+'s';
+      el.style.animationDelay = Math.random()*0.3+'s';
       document.body.appendChild(el);
       setTimeout(function(){ el.remove(); }, 2000);
-    }, i * 30);
+    }, i*30);
   }
 }
 
@@ -2197,12 +2143,11 @@ document.addEventListener('keydown', function(e) {
 
 // ── INIT ───────────────────────────────────────────────
 function init() {
-  const btn = document.querySelector('.run-btn');
-  btn.innerHTML = '⏳ Python...';
-  btn.disabled = true;
   buildSidebar();
   renderTheory();
   renderTasks();
+  // Кнопка сразу активна — API вызывается по клику
+  document.querySelector('.run-btn').disabled = false;
 }
 
 init();
