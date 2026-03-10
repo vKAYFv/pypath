@@ -1926,6 +1926,10 @@ function selectModule(idx) {
   buildSidebar();
   renderTheory();
   renderTasks();
+  document.getElementById('active-task-name').textContent = 'выбери задачу';
+  document.getElementById('check-btn').classList.remove('visible');
+  document.getElementById('code-editor').value = '';
+  clearOutput();
   document.getElementById('module-badge').textContent = `Модуль ${String(MODULES[idx].id).padStart(2,'0')}`;
   // stay on theory tab
   switchTab('theory');
@@ -1992,6 +1996,7 @@ function selectTask(idx) {
 // Грузится ~3-4 сек при первом запуске, потом мгновенно
 // ══════════════════════════════════════════════════════
 let pyodide = null;
+let executionInProgress = false;
 
 async function initPyodide() {
   const btn = document.querySelector('.run-btn');
@@ -2008,6 +2013,31 @@ async function initPyodide() {
     btn.innerHTML = '❌ Ошибка загрузки';
     appendOutput('Не удалось загрузить Python: ' + e.message, 'error');
   }
+}
+
+function setExecutionState(isBusy) {
+  executionInProgress = isBusy;
+  const runBtn = document.querySelector('.run-btn');
+  const checkBtn = document.getElementById('check-btn');
+  if (runBtn) runBtn.disabled = isBusy || !pyodide;
+  if (checkBtn) checkBtn.disabled = isBusy;
+}
+
+function pushBatchedLines(store, chunk, isErr) {
+  chunk.split(/\r?\n/).forEach(line => {
+    if (line !== '') store.push({ t: line, err: isErr });
+  });
+}
+
+function extractReadableError(err) {
+  const raw = (err && err.message) ? err.message : String(err);
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const filtered = lines.filter(l =>
+    !l.startsWith('PythonError:') &&
+    l !== 'The above exception was the direct cause of the following exception:'
+  );
+  const source = filtered.length ? filtered : lines;
+  return source.slice(-4);
 }
 
 function clearOutput() {
@@ -2034,103 +2064,140 @@ function appendOutput(text, cls) {
   el.scrollTop = el.scrollHeight;
 }
 
-async function runPythonCode(code) {
+async function runPythonCode(code, filename) {
   const outLines = [];
-  pyodide.setStdout({ batched: (s) => s.split('\n').forEach(l => l !== '' && outLines.push({ t: l, err: false })) });
-  pyodide.setStderr({ batched: (s) => s.split('\n').forEach(l => l !== '' && outLines.push({ t: l, err: true })) });
-  await pyodide.runPythonAsync(code);
-  return outLines;
+  pyodide.setStdout({ batched: (s) => pushBatchedLines(outLines, s, false) });
+  pyodide.setStderr({ batched: (s) => pushBatchedLines(outLines, s, true) });
+
+  pyodide.globals.set('__pypath_code__', code);
+  pyodide.globals.set('__pypath_filename__', filename || '<student_code>');
+
+  try {
+    await pyodide.runPythonAsync(
+`_pypath_ns = {"__name__": "__main__"}
+exec(compile(__pypath_code__, __pypath_filename__, "exec"), _pypath_ns, _pypath_ns)`
+    );
+    return { lines: outLines, error: null };
+  } catch (error) {
+    return { lines: outLines, error };
+  } finally {
+    pyodide.globals.delete('__pypath_code__');
+    pyodide.globals.delete('__pypath_filename__');
+  }
 }
 
 async function runCode() {
   if (!pyodide) { appendOutput('⏳ Python ещё загружается...', 'info'); return; }
+  if (executionInProgress) { appendOutput('⏳ Дождись завершения текущего запуска.', 'info'); return; }
 
   const code = document.getElementById('code-editor').value;
-  if (!code.trim()) return;
+  if (!code.trim()) { appendOutput('⚠️ Введи код для запуска.', 'info'); return; }
 
-  const btn = document.querySelector('.run-btn');
-  btn.disabled = true;
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'running...');
+  setExecutionState(true);
 
   try {
-    const lines = await runPythonCode(code);
-    lines.forEach(l => appendOutput(l.t, l.err ? 'error' : ''));
-    const hasErr = lines.some(l => l.err);
+    const result = await runPythonCode(code, 'student_run.py');
+    result.lines.forEach(l => appendOutput(l.t, l.err ? 'error' : ''));
+
+    if (result.error) {
+      extractReadableError(result.error).forEach(line => appendOutput(line, 'error'));
+      setStatus('err', 'error');
+      return;
+    }
+
+    if (result.lines.length === 0) appendOutput('// Код выполнен без вывода', 'info');
+    const hasErr = result.lines.some(l => l.err);
     setStatus(hasErr ? 'err' : 'ok', hasErr ? 'error' : 'done');
     // Автовалидация отключена — используй кнопку "Проверить"
-  } catch(e) {
-    // Берём только суть — последние строки traceback
-    const msg = (e.message || String(e)).split('\n').filter(l => l.trim());
-    const short = msg.length > 4 ? msg.slice(-3) : msg;
-    short.forEach(l => appendOutput(l, 'error'));
+  } catch (e) {
+    extractReadableError(e).forEach(line => appendOutput(line, 'error'));
     setStatus('err', 'error');
   } finally {
-    btn.disabled = false;
+    setExecutionState(false);
   }
 }
 
 // ── VALIDATION ─────────────────────────────────────────
 function runValidation(code) {
   const mod = MODULES[STATE.currentModule];
-  if (STATE.currentTask === null || !mod.tasks[STATE.currentTask]) return;
-  const task = mod.tasks[STATE.currentTask];
+  if (STATE.currentTask === null || !mod.tasks[STATE.currentTask]) {
+    appendOutput('⚠️ Сначала выбери задачу слева.', 'info');
+    return null;
+  }
+
+  const taskIdx = STATE.currentTask;
+  const task = mod.tasks[taskIdx];
   const fnName = task.name.replace('()', '');
   const tests = getTaskTests(fnName);
-  if (!tests) return;
-  runTestsAsync(code + '\n' + tests, mod);
+  if (!tests) {
+    appendOutput('⚠️ Для этой задачи пока нет автопроверки.', 'error');
+    setStatus('err', 'no tests');
+    return null;
+  }
+
+  const marker = `__PYPATH_CHECK_END__${Date.now()}`;
+  return {
+    mod,
+    taskIdx,
+    marker,
+    fullCode: `${code}\n${tests}\nprint("${marker}")`
+  };
 }
 
 async function runCheck() {
   if (!pyodide) { appendOutput('⏳ Python ещё загружается...', 'info'); return; }
+  if (executionInProgress) { appendOutput('⏳ Дождись завершения текущего запуска.', 'info'); return; }
   const code = document.getElementById('code-editor').value;
-  if (!code.trim()) return;
+  if (!code.trim()) { appendOutput('⚠️ Введи код для проверки.', 'info'); return; }
+
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'checking...');
-  const btn = document.getElementById('check-btn');
-  btn.disabled = true;
-  try { runValidation(code); }
-  finally { setTimeout(() => { btn.disabled = false; }, 2000); }
+  setExecutionState(true);
+
+  try {
+    const payload = runValidation(code);
+    if (!payload) return;
+    await runTestsAsync(payload.fullCode, payload.mod, payload.taskIdx, payload.marker);
+  } finally {
+    setExecutionState(false);
+  }
 }
 
-async function runTestsAsync(fullCode, mod) {
-  const testOut = [];
-  const testErr = [];
+async function runTestsAsync(fullCode, mod, taskIdx, marker) {
   try {
-    pyodide.setStdout({ batched: (s) => testOut.push(s) });
-    pyodide.setStderr({ batched: (s) => testErr.push(s) });
-    await pyodide.runPythonAsync(fullCode);
+    const result = await runPythonCode(fullCode, 'student_check.py');
+    const pureLines = result.lines
+      .map(l => l.t.trim())
+      .filter(l => l && l !== marker);
 
-    const allOutput = testOut.join('').trim();
-    const lines = allOutput.split('\n').filter(l => l.trim());
-    const result = lines[lines.length - 1];
+    if (result.error) {
+      extractReadableError(result.error).forEach(line => appendOutput(line, 'error'));
+      setStatus('err', 'error');
+      return;
+    }
 
-    appendOutput('');
-    if (result === 'ALL_PASS') {
+    const checkResult = pureLines.length ? pureLines[pureLines.length - 1] : '';
+    if (checkResult === 'ALL_PASS') {
       appendOutput('══════════════════════', 'success');
       appendOutput('✓  Все тесты пройдены!', 'success');
       appendOutput('══════════════════════', 'success');
       setStatus('ok', 'passed');
-      markSolved(mod.id, STATE.currentTask);
+      markSolved(mod.id, taskIdx);
       buildSidebar();
       renderTasks();
       showToast('✓ Задача решена!', 'success');
       confetti();
     } else {
       // Показываем нормальную ошибку
-      const msg = result || 'Функция вернула None — замени pass на своё решение';
+      const msg = checkResult || 'Тесты не вернули результат — проверь, что функция что-то возвращает.';
       appendOutput('✗  ' + msg, 'error');
       setStatus('err', 'failed');
     }
   } catch(e) {
     // Python exception во время теста
-    appendOutput('');
-    const raw = (e.message || String(e));
-    // Ищем AssertionError или последнюю значимую строку
-    const lines = raw.split('\n').filter(l => l.trim());
-    const errLine = lines.find(l => l.includes('AssertionError') || l.includes('Error:')) || lines[lines.length-1];
-    const clean = errLine ? errLine.replace(/.*Error:\s*/, '') : 'Ошибка в коде';
-    appendOutput('✗  ' + clean, 'error');
+    extractReadableError(e).forEach(line => appendOutput(line, 'error'));
     setStatus('err', 'error');
   }
 }
@@ -2199,10 +2266,16 @@ function getTaskTests(fnName) {
 `\ntry:\n    assert most_frequent([1,2,2,3,2,1])==2\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     merge_dicts:
 `\ntry:\n    r=merge_dicts([{"a":1,"b":2},{"b":3,"c":4}])\n    assert r["b"]==5 and r["a"]==1\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+    anagram_groups:
+`\ntry:\n    words=["eat","tea","tan","ate","nat","bat"]\n    r=anagram_groups(words)\n    assert isinstance(r,list),"Должен вернуть список групп"\n    flat=[w for g in r for w in g]\n    assert sorted(flat)==sorted(words),f"Потеряны или добавлены слова: {r}"\n    groups=[set(g) for g in r]\n    assert any(set(["eat","tea","ate"])==g for g in groups),"Группа eat/tea/ate неверна"\n    assert any(set(["tan","nat"])==g for g in groups),"Группа tan/nat неверна"\n    assert any(set(["bat"])==g for g in groups),"Группа bat неверна"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     apply_twice:
 `\ntry:\n    assert apply_twice(lambda x:x*2,3)==12\n    assert apply_twice(lambda x:x+1,5)==7\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     compose:
 `\ntry:\n    f=compose(lambda x:x*2,lambda x:x+1)\n    assert f(3)==8\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+    memoize:
+`\ntry:\n    calls={"n":0}\n    def raw(x):\n        calls["n"] += 1\n        return x*2\n    cached=memoize(raw)\n    assert cached(5)==10\n    assert cached(5)==10\n    assert cached(5)==10\n    assert calls["n"]==1,f"Кэш не сработал, вызовов: {calls['n']}"\n    assert cached(7)==14\n    assert calls["n"]==2,f"Для нового аргумента должен быть новый вызов, получили {calls['n']}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+    partial:
+`\ntry:\n    def add(a,b): return a+b\n    add5=partial(add,5)\n    assert add5(3)==8\n    assert add5(10)==15\n    def mul3(a,b,c): return a*b*c\n    times6=partial(mul3,2,3)\n    assert times6(4)==24\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     flatten_deep:
 `\ntry:\n    assert flatten_deep([1,[2,[3,[4,[5]]]]])==[1,2,3,4,5]\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     pipeline:
