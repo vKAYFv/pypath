@@ -540,17 +540,96 @@ body {
 .check-btn:hover { background: rgba(61,214,140,0.08); border-color: var(--green); }
 .check-btn.visible { display: flex; }
 
+.reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-right: 8px;
+}
+
+.reset-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(247,201,72,0.06);
+}
+
 .editor-wrap {
   flex: 1;
   overflow: hidden;
   position: relative;
+  background: #1a1b26;
+}
+
+.code-editor-shell {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.editor-gutter {
+  width: 56px;
+  flex-shrink: 0;
+  background: #161722;
+  border-right: 1px solid var(--border);
+  color: #5f6480;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  text-align: right;
+  padding: 20px 10px 20px 6px;
+  overflow: hidden;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-num {
+  display: block;
+  min-height: 1.7em;
+}
+
+.editor-code-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#editor-highlight {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 20px;
+  overflow: auto;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  tab-size: 4;
+  white-space: pre;
+}
+
+#editor-highlight code {
+  display: block;
+  min-height: 100%;
 }
 
 #code-editor {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  background: #1a1b26;
-  color: #c0caf5;
+  background: transparent;
+  color: transparent;
+  caret-color: #c0caf5;
   border: none;
   outline: none;
   font-family: var(--font-mono);
@@ -558,7 +637,17 @@ body {
   line-height: 1.7;
   padding: 20px;
   resize: none;
+  overflow: auto;
   tab-size: 4;
+  white-space: pre;
+}
+
+#code-editor::placeholder {
+  color: #6f7391;
+}
+
+#code-editor::selection {
+  background: rgba(91, 156, 246, 0.35);
 }
 
 /* Output */
@@ -804,13 +893,20 @@ body {
           <div class="editor-header">
             <div class="editor-filename">tasks.py — <span id="active-task-name">выбери задачу</span></div>
             <button class="check-btn" onclick="runCheck()" id="check-btn">✓ Проверить</button>
+            <button class="reset-btn" onclick="resetCurrentTaskCode()" id="reset-btn">↺ Сбросить</button>
             <button class="run-btn" onclick="runCode()">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
               Запустить
             </button>
           </div>
           <div class="editor-wrap">
-            <textarea id="code-editor" spellcheck="false" placeholder="# Выбери задачу слева и напиши код здесь..."></textarea>
+            <div class="code-editor-shell">
+              <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><span class="line-num">1</span></div>
+              <div class="editor-code-wrap">
+                <pre id="editor-highlight" aria-hidden="true"><code id="editor-highlight-code" class="language-python"></code></pre>
+                <textarea id="code-editor" spellcheck="false" placeholder="# Выбери задачу слева и напиши код здесь..."></textarea>
+              </div>
+            </div>
           </div>
           <div class="output-panel">
             <div class="output-header">
@@ -1835,6 +1931,7 @@ function switchTab(tab) {
 
   const target = document.getElementById(`panel-${tab}`);
   if (target) target.classList.add('active');
+  if (tab === 'progress') renderProgress();
 }
 
 async function copyCode(btn) {
@@ -1907,14 +2004,74 @@ function buildSidebar() {
 }
 
 function updateProgressBar() {
-  let totalTasks = 0, solvedTasks = 0;
-  MODULES.forEach(mod => {
-    totalTasks += mod.tasks.length;
-    mod.tasks.forEach((_,i) => { if (isSolved(mod.id,i)) solvedTasks++; });
-  });
+  const stats = getProgressStats();
+  const totalTasks = stats.totalTasks;
+  const solvedTasks = stats.solvedTasks;
   const pct = totalTasks > 0 ? Math.round(solvedTasks/totalTasks*100) : 0;
   document.getElementById('prog-fill').style.width = pct + '%';
   document.getElementById('prog-text').textContent = `${solvedTasks} / ${totalTasks}`;
+  renderProgress();
+}
+
+function getProgressStats() {
+  let totalTasks = 0;
+  let solvedTasks = 0;
+  let completedModules = 0;
+  const modules = MODULES.map(mod => {
+    const total = mod.tasks.length;
+    const solved = mod.tasks.filter((_, i) => isSolved(mod.id, i)).length;
+    const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
+    if (total > 0 && solved === total) completedModules++;
+    totalTasks += total;
+    solvedTasks += solved;
+    return {
+      id: mod.id,
+      title: mod.title,
+      total,
+      solved,
+      pct
+    };
+  });
+
+  return {
+    totalTasks,
+    solvedTasks,
+    completedModules,
+    modules
+  };
+}
+
+function renderProgress() {
+  const statsGrid = document.getElementById('stats-grid');
+  const modulesList = document.getElementById('modules-progress-list');
+  if (!statsGrid || !modulesList) return;
+
+  const stats = getProgressStats();
+  const pct = stats.totalTasks > 0 ? Math.round((stats.solvedTasks / stats.totalTasks) * 100) : 0;
+
+  const cards = [
+    { value: `${stats.solvedTasks}`, label: 'Решено задач' },
+    { value: `${stats.totalTasks}`, label: 'Всего задач' },
+    { value: `${pct}%`, label: 'Общий прогресс' },
+    { value: `${stats.completedModules}`, label: 'Модулей завершено' }
+  ];
+
+  statsGrid.innerHTML = cards.map(card => `
+    <div class="stat-card">
+      <div class="stat-value">${card.value}</div>
+      <div class="stat-label">${card.label}</div>
+    </div>
+  `).join('');
+
+  modulesList.innerHTML = stats.modules.map(mod => `
+    <div class="module-prog-item">
+      <div class="module-prog-name">${String(mod.id).padStart(2, '0')}. ${mod.title}</div>
+      <div class="module-prog-bar">
+        <div class="module-prog-fill" style="width:${mod.pct}%"></div>
+      </div>
+      <div class="module-prog-pct">${mod.solved}/${mod.total}</div>
+    </div>
+  `).join('');
 }
 
 // ══════════════════════════════════════════════════════
@@ -1929,6 +2086,7 @@ function selectModule(idx) {
   document.getElementById('active-task-name').textContent = 'выбери задачу';
   document.getElementById('check-btn').classList.remove('visible');
   document.getElementById('code-editor').value = '';
+  renderEditorDecorations();
   clearOutput();
   document.getElementById('module-badge').textContent = `Модуль ${String(MODULES[idx].id).padStart(2,'0')}`;
   // stay on theory tab
@@ -1985,10 +2143,28 @@ function selectTask(idx) {
   renderTasks();
   const task = mod.tasks[idx];
   document.getElementById('code-editor').value = task.starter;
+  renderEditorDecorations();
   document.getElementById('active-task-name').textContent = task.name;
   document.getElementById('check-btn').classList.add('visible');
   clearOutput();
   switchTab('tasks');
+}
+
+function resetCurrentTaskCode() {
+  const editor = document.getElementById('code-editor');
+  const mod = MODULES[STATE.currentModule];
+  if (!editor) return;
+
+  if (STATE.currentTask === null || !mod.tasks[STATE.currentTask]) {
+    editor.value = '';
+    document.getElementById('active-task-name').textContent = 'выбери задачу';
+    document.getElementById('check-btn').classList.remove('visible');
+  } else {
+    editor.value = mod.tasks[STATE.currentTask].starter;
+  }
+
+  renderEditorDecorations();
+  clearOutput();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2019,8 +2195,10 @@ function setExecutionState(isBusy) {
   executionInProgress = isBusy;
   const runBtn = document.querySelector('.run-btn');
   const checkBtn = document.getElementById('check-btn');
+  const resetBtn = document.getElementById('reset-btn');
   if (runBtn) runBtn.disabled = isBusy || !pyodide;
   if (checkBtn) checkBtn.disabled = isBusy;
+  if (resetBtn) resetBtn.disabled = isBusy;
 }
 
 function pushBatchedLines(store, chunk, isErr) {
@@ -2031,13 +2209,191 @@ function pushBatchedLines(store, chunk, isErr) {
 
 function extractReadableError(err) {
   const raw = (err && err.message) ? err.message : String(err);
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = raw.split('\n').filter(l => l.trim().length > 0);
   const filtered = lines.filter(l =>
-    !l.startsWith('PythonError:') &&
-    l !== 'The above exception was the direct cause of the following exception:'
+    !l.trim().startsWith('PythonError:') &&
+    l.trim() !== 'The above exception was the direct cause of the following exception:'
   );
-  const source = filtered.length ? filtered : lines;
-  return source.slice(-4);
+  const source = (filtered.length ? filtered : lines).map(l => l.replace(/^PythonError:\s*/, ''));
+  return source.slice(-6);
+}
+
+function appendErrorGuidance(errorLines) {
+  const text = errorLines.join('\n');
+  if (/TabError|IndentationError/.test(text)) {
+    appendOutput('// Подсказка: используй только 4 пробела для отступов, без смешивания tabs/spaces.', 'info');
+  } else if (/SyntaxError/.test(text)) {
+    appendOutput('// Подсказка: проверь двоеточия, скобки и кавычки в строке с ошибкой.', 'info');
+  }
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function syncEditorScroll() {
+  const editor = document.getElementById('code-editor');
+  const highlight = document.getElementById('editor-highlight');
+  const gutter = document.getElementById('editor-gutter');
+  if (!editor || !highlight || !gutter) return;
+  highlight.scrollTop = editor.scrollTop;
+  highlight.scrollLeft = editor.scrollLeft;
+  gutter.scrollTop = editor.scrollTop;
+}
+
+function renderEditorDecorations() {
+  const editor = document.getElementById('code-editor');
+  const code = document.getElementById('editor-highlight-code');
+  const gutter = document.getElementById('editor-gutter');
+  if (!editor || !code || !gutter) return;
+
+  const text = editor.value || '';
+  let highlighted = '';
+  try {
+    highlighted = hljs.highlight(text, { language: 'python', ignoreIllegals: true }).value;
+  } catch (_) {
+    highlighted = escapeHtml(text);
+  }
+
+  code.innerHTML = highlighted || ' ';
+
+  const lineCount = Math.max(1, text.split('\n').length);
+  let nums = '';
+  for (let i = 1; i <= lineCount; i++) {
+    nums += `<span class="line-num">${i}</span>`;
+  }
+  gutter.innerHTML = nums;
+
+  syncEditorScroll();
+}
+
+function normalizeCodeForExecution(code) {
+  const cleaned = code.replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n');
+  let hadTabIndent = false;
+  const normalized = cleaned.split('\n').map(line => {
+    const lead = line.match(/^[ \t]+/);
+    if (!lead) return line;
+    if (lead[0].includes('\t')) hadTabIndent = true;
+    return lead[0].replace(/\t/g, '    ') + line.slice(lead[0].length);
+  }).join('\n');
+  return { code: normalized, hadTabIndent };
+}
+
+function getPreparedEditorCode() {
+  const editor = document.getElementById('code-editor');
+  const source = editor ? editor.value : '';
+  const prepared = normalizeCodeForExecution(source);
+  const changed = source !== prepared.code;
+  if (changed && editor) {
+    const caret = editor.selectionStart;
+    editor.value = prepared.code;
+    editor.selectionStart = editor.selectionEnd = Math.min(caret, editor.value.length);
+    renderEditorDecorations();
+  }
+  return { code: prepared.code, normalizedTabs: prepared.hadTabIndent && changed };
+}
+
+function getIndentRemoveCount(line) {
+  if (line.startsWith('\t')) return 1;
+  const spaces = line.match(/^ {1,4}/);
+  return spaces ? spaces[0].length : 0;
+}
+
+function indentSelection(editor) {
+  const value = editor.value;
+  const s = editor.selectionStart;
+  const e = editor.selectionEnd;
+
+  if (s === e) {
+    editor.value = value.slice(0, s) + '    ' + value.slice(e);
+    editor.selectionStart = editor.selectionEnd = s + 4;
+    renderEditorDecorations();
+    return;
+  }
+
+  const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+  const selected = value.slice(lineStart, e);
+  const indented = selected.replace(/^/gm, '    ');
+  editor.value = value.slice(0, lineStart) + indented + value.slice(e);
+  editor.selectionStart = s + 4;
+  editor.selectionEnd = e + (indented.length - selected.length);
+  renderEditorDecorations();
+}
+
+function outdentSelection(editor) {
+  const value = editor.value;
+  const s = editor.selectionStart;
+  const e = editor.selectionEnd;
+
+  if (s === e) {
+    const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+    const lineEnd = value.indexOf('\n', s);
+    const endPos = lineEnd === -1 ? value.length : lineEnd;
+    const line = value.slice(lineStart, endPos);
+    const remove = getIndentRemoveCount(line);
+    if (!remove) return;
+    editor.value = value.slice(0, lineStart) + line.slice(remove) + value.slice(endPos);
+    const newPos = Math.max(lineStart, s - remove);
+    editor.selectionStart = editor.selectionEnd = newPos;
+    renderEditorDecorations();
+    return;
+  }
+
+  const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+  const selected = value.slice(lineStart, e);
+  const lines = selected.split('\n');
+  let removedTotal = 0;
+  let removedFirst = 0;
+  const outdented = lines.map((line, idx) => {
+    const remove = getIndentRemoveCount(line);
+    if (idx === 0) removedFirst = remove;
+    removedTotal += remove;
+    return line.slice(remove);
+  }).join('\n');
+
+  editor.value = value.slice(0, lineStart) + outdented + value.slice(e);
+  const firstOffset = Math.max(0, s - lineStart);
+  editor.selectionStart = s - Math.min(removedFirst, firstOffset);
+  editor.selectionEnd = e - removedTotal;
+  renderEditorDecorations();
+}
+
+function insertNewlineWithIndent(editor) {
+  const value = editor.value;
+  const s = editor.selectionStart;
+  const e = editor.selectionEnd;
+  const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+  const beforeCursor = value.slice(lineStart, s);
+  const currentIndent = (beforeCursor.match(/^[ \t]*/) || [''])[0].replace(/\t/g, '    ');
+  const trimmed = beforeCursor.trimEnd();
+  const extraIndent = trimmed.endsWith(':') ? '    ' : '';
+  const insert = '\n' + currentIndent + extraIndent;
+
+  editor.value = value.slice(0, s) + insert + value.slice(e);
+  const pos = s + insert.length;
+  editor.selectionStart = editor.selectionEnd = pos;
+  renderEditorDecorations();
+}
+
+function appendBeginnerHintForNone(code, lines) {
+  const hasPass = /\bpass\b/.test(code);
+  if (!hasPass) return;
+  const nonErrorLines = lines.filter(l => !l.err).map(l => l.t.trim()).filter(Boolean);
+  if (nonErrorLines.length > 0 && nonErrorLines.every(l => l === 'None')) {
+    appendOutput('// Подсказка: функция с pass возвращает None. Замени pass на return с ответом.', 'info');
+  }
+}
+
+function setupCodeEditor() {
+  const editor = document.getElementById('code-editor');
+  if (!editor) return;
+  editor.addEventListener('input', renderEditorDecorations);
+  editor.addEventListener('scroll', syncEditorScroll);
+  window.addEventListener('resize', syncEditorScroll);
+  renderEditorDecorations();
 }
 
 function clearOutput() {
@@ -2090,29 +2446,38 @@ async function runCode() {
   if (!pyodide) { appendOutput('⏳ Python ещё загружается...', 'info'); return; }
   if (executionInProgress) { appendOutput('⏳ Дождись завершения текущего запуска.', 'info'); return; }
 
-  const code = document.getElementById('code-editor').value;
+  const prepared = getPreparedEditorCode();
+  const code = prepared.code;
   if (!code.trim()) { appendOutput('⚠️ Введи код для запуска.', 'info'); return; }
 
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'running...');
   setExecutionState(true);
+  if (prepared.normalizedTabs) {
+    appendOutput('// Отступы с tab автоматически заменены на 4 пробела.', 'info');
+  }
 
   try {
     const result = await runPythonCode(code, 'student_run.py');
     result.lines.forEach(l => appendOutput(l.t, l.err ? 'error' : ''));
 
     if (result.error) {
-      extractReadableError(result.error).forEach(line => appendOutput(line, 'error'));
+      const errLines = extractReadableError(result.error);
+      errLines.forEach(line => appendOutput(line, 'error'));
+      appendErrorGuidance(errLines);
       setStatus('err', 'error');
       return;
     }
 
     if (result.lines.length === 0) appendOutput('// Код выполнен без вывода', 'info');
+    appendBeginnerHintForNone(code, result.lines);
     const hasErr = result.lines.some(l => l.err);
     setStatus(hasErr ? 'err' : 'ok', hasErr ? 'error' : 'done');
     // Автовалидация отключена — используй кнопку "Проверить"
   } catch (e) {
-    extractReadableError(e).forEach(line => appendOutput(line, 'error'));
+    const errLines = extractReadableError(e);
+    errLines.forEach(line => appendOutput(line, 'error'));
+    appendErrorGuidance(errLines);
     setStatus('err', 'error');
   } finally {
     setExecutionState(false);
@@ -2149,12 +2514,16 @@ function runValidation(code) {
 async function runCheck() {
   if (!pyodide) { appendOutput('⏳ Python ещё загружается...', 'info'); return; }
   if (executionInProgress) { appendOutput('⏳ Дождись завершения текущего запуска.', 'info'); return; }
-  const code = document.getElementById('code-editor').value;
+  const prepared = getPreparedEditorCode();
+  const code = prepared.code;
   if (!code.trim()) { appendOutput('⚠️ Введи код для проверки.', 'info'); return; }
 
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'checking...');
   setExecutionState(true);
+  if (prepared.normalizedTabs) {
+    appendOutput('// Отступы с tab автоматически заменены на 4 пробела.', 'info');
+  }
 
   try {
     const payload = runValidation(code);
@@ -2173,7 +2542,9 @@ async function runTestsAsync(fullCode, mod, taskIdx, marker) {
       .filter(l => l && l !== marker);
 
     if (result.error) {
-      extractReadableError(result.error).forEach(line => appendOutput(line, 'error'));
+      const errLines = extractReadableError(result.error);
+      errLines.forEach(line => appendOutput(line, 'error'));
+      appendErrorGuidance(errLines);
       setStatus('err', 'error');
       return;
     }
@@ -2197,7 +2568,9 @@ async function runTestsAsync(fullCode, mod, taskIdx, marker) {
     }
   } catch(e) {
     // Python exception во время теста
-    extractReadableError(e).forEach(line => appendOutput(line, 'error'));
+    const errLines = extractReadableError(e);
+    errLines.forEach(line => appendOutput(line, 'error'));
+    appendErrorGuidance(errLines);
     setStatus('err', 'error');
   }
 }
@@ -2307,18 +2680,29 @@ function confetti() {
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault(); runCode();
+    return;
   }
-  if (e.key === 'Tab' && document.activeElement === document.getElementById('code-editor')) {
+
+  const editor = document.getElementById('code-editor');
+  if (document.activeElement !== editor) return;
+
+  if (e.key === 'Tab') {
     e.preventDefault();
-    const ed = document.getElementById('code-editor');
-    const s = ed.selectionStart, en = ed.selectionEnd;
-    ed.value = ed.value.substring(0,s)+'    '+ed.value.substring(en);
-    ed.selectionStart = ed.selectionEnd = s+4;
+    if (e.shiftKey) outdentSelection(editor);
+    else indentSelection(editor);
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    insertNewlineWithIndent(editor);
+    return;
   }
 });
 
 // ── INIT ───────────────────────────────────────────────
 function init() {
+  setupCodeEditor();
   buildSidebar();
   renderTheory();
   renderTasks();
