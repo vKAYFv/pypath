@@ -9,6 +9,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<!-- Skulpt загружаем в head чтобы был готов до первого клика -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt-stdlib.js"></script>
 
 <style>
 /* ── RESET & BASE ─────────────────────────────────────── */
@@ -1937,14 +1940,6 @@ function runCode() {
   document.getElementById('output-content').innerHTML = '';
   setStatus('running', 'running...');
 
-  // Check if Skulpt loaded
-  if (typeof Sk === 'undefined') {
-    appendOutput('⚠️  Python интерпретатор загружается...', 'error');
-    appendOutput('Подожди секунду и попробуй снова.', 'error');
-    setStatus('err', 'error');
-    return;
-  }
-
   Sk.configure({
     output: (text) => {
       text.split('\n').forEach(line => {
@@ -2596,13 +2591,25 @@ function init() {
   buildSidebar();
   renderTheory();
   renderTasks();
+
+  // Проверяем что Skulpt загружен — он в <head> поэтому должен быть готов
+  // Но на медленном соединении даём визуальный фидбек
+  const btn = document.querySelector('.run-btn');
+  if (typeof Sk === 'undefined') {
+    btn.textContent = '⏳ Загрузка Python...';
+    btn.disabled = true;
+    const check = setInterval(() => {
+      if (typeof Sk !== 'undefined') {
+        clearInterval(check);
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Запустить`;
+        btn.disabled = false;
+      }
+    }, 200);
+  }
 }
 
 init();
 </script>
 
-<!-- Skulpt: Python in browser -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt-stdlib.js"></script>
 </body>
 </html>
