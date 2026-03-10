@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d0d0f"/>
+      <stop offset="100%" style="stop-color:#111114"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f7c948"/>
+      <stop offset="50%" style="stop-color:#ffe278"/>
+      <stop offset="100%" style="stop-color:#e8a020"/>
+    </linearGradient>
+    <linearGradient id="goldVert" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffe278"/>
+      <stop offset="100%" style="stop-color:#f7c948"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <mask id="revealMask">
+      <rect id="maskRect" x="0" y="0" width="0" height="200" fill="white">
+        <animate attributeName="width" from="0" to="800" dur="1.2s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+      </rect>
+    </mask>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" fill="url(#bg)" rx="16"/>
+
+  <!-- Subtle grid lines -->
+  <g opacity="0.04" stroke="#f7c948" stroke-width="0.5">
+    <line x1="0" y1="40" x2="800" y2="40"/>
+    <line x1="0" y1="80" x2="800" y2="80"/>
+    <line x1="0" y1="120" x2="800" y2="120"/>
+    <line x1="0" y1="160" x2="800" y2="160"/>
+    <line x1="100" y1="0" x2="100" y2="200"/>
+    <line x1="200" y1="0" x2="200" y2="200"/>
+    <line x1="300" y1="0" x2="300" y2="200"/>
+    <line x1="400" y1="0" x2="400" y2="200"/>
+    <line x1="500" y1="0" x2="500" y2="200"/>
+    <line x1="600" y1="0" x2="600" y2="200"/>
+    <line x1="700" y1="0" x2="700" y2="200"/>
+  </g>
+
+  <!-- Glow blob behind text -->
+  <ellipse cx="260" cy="100" rx="200" ry="60" fill="#f7c948" opacity="0">
+    <animate attributeName="opacity" values="0;0.06;0.04" dur="2s" fill="freeze" begin="0.3s"/>
+  </ellipse>
+
+  <!-- Border -->
+  <rect width="800" height="200" fill="none" stroke="#2a2a30" stroke-width="1" rx="16"/>
+  <rect width="800" height="200" fill="none" stroke="#f7c948" stroke-width="1.5" rx="16" opacity="0">
+    <animate attributeName="opacity" values="0;0.3;0.2" dur="1s" fill="freeze" begin="0.8s"/>
+  </rect>
+
+  <!-- Accent line top -->
+  <rect x="0" y="0" width="0" height="3" fill="url(#gold)" rx="2">
+    <animate attributeName="width" from="0" to="800" dur="1s" fill="freeze" begin="0.2s" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+  </rect>
+
+  <!-- PY — large letters -->
+  <g mask="url(#revealMask)">
+    <text x="48" y="128" font-family="'Arial Black', sans-serif" font-size="96" font-weight="900"
+          fill="url(#goldVert)" filter="url(#softglow)" letter-spacing="-4" opacity="0.95">Py</text>
+  </g>
+
+  <!-- PATH — outline style -->
+  <text x="198" y="128" font-family="'Arial Black', sans-serif" font-size="96" font-weight="900"
+        fill="none" stroke="#f7c948" stroke-width="2.5" letter-spacing="-4" opacity="0">
+    Path
+    <animate attributeName="opacity" values="0;0;0.9" dur="1.4s" fill="freeze" calcMode="spline" keySplines="0 0 0.2 1;0.4 0 0.2 1"/>
+    <animate attributeName="stroke-dasharray" from="0 2000" to="2000 0" dur="1.2s" fill="freeze" begin="0.4s" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+    <animate attributeName="stroke-dashoffset" from="2000" to="0" dur="1.2s" fill="freeze" begin="0.4s" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+  </text>
+
+  <!-- Dot accent -->
+  <circle cx="530" cy="135" r="7" fill="#f7c948" opacity="0" filter="url(#glow)">
+    <animate attributeName="opacity" values="0;1" dur="0.3s" fill="freeze" begin="1.2s"/>
+    <animate attributeName="r" values="0;10;7" dur="0.5s" fill="freeze" begin="1.2s"/>
+  </circle>
+
+  <!-- Tagline -->
+  <text x="48" y="168" font-family="'Courier New', monospace" font-size="13" fill="#5a5a72" opacity="0" letter-spacing="2">
+    // интерактивный курс Python с нуля
+    <animate attributeName="opacity" values="0;0.8" dur="0.6s" fill="freeze" begin="1.3s"/>
+  </text>
+
+  <!-- Cursor blink after tagline -->
+  <rect x="397" y="155" width="8" height="14" fill="#f7c948" rx="1" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0;1;1;0" dur="2s" repeatCount="indefinite" begin="1.9s"/>
+  </rect>
+
+  <!-- Right side — code snippet decoration -->
+  <g opacity="0" font-family="'Courier New', monospace" font-size="12">
+    <animate attributeName="opacity" values="0;0.6" dur="0.8s" fill="freeze" begin="1.5s"/>
+    <text x="590" y="72" fill="#3dd68c">def</text>
+    <text x="615" y="72" fill="#5b9cf6"> learn</text>
+    <text x="657" y="72" fill="#e8e8f0">(python):</text>
+    <text x="590" y="92" fill="#5a5a72">    </text>
+    <text x="608" y="92" fill="#f7c948">while</text>
+    <text x="644" y="92" fill="#e8e8f0"> True:</text>
+    <text x="608" y="112" fill="#5a5a72">        </text>
+    <text x="626" y="112" fill="#a78bfa">skills</text>
+    <text x="668" y="112" fill="#e8e8f0"> += </text>
+    <text x="690" y="112" fill="#f7c948">1</text>
+    <text x="590" y="132" fill="#5a5a72">    </text>
+    <text x="608" y="132" fill="#3dd68c">return</text>
+    <text x="651" y="132" fill="#a78bfa"> job</text>
+    <line x1="582" y1="55" x2="582" y2="145" stroke="#2a2a30" stroke-width="1"/>
+  </g>
+
+  <!-- Stars / particles -->
+  <circle cx="560" cy="30" r="1.5" fill="#f7c948" opacity="0">
+    <animate attributeName="opacity" values="0;0.6;0" dur="3s" repeatCount="indefinite" begin="2s"/>
+  </circle>
+  <circle cx="740" cy="55" r="1" fill="#f7c948" opacity="0">
+    <animate attributeName="opacity" values="0;0.4;0" dur="2.5s" repeatCount="indefinite" begin="2.5s"/>
+  </circle>
+  <circle cx="580" cy="170" r="1.5" fill="#5b9cf6" opacity="0">
+    <animate attributeName="opacity" values="0;0.5;0" dur="4s" repeatCount="indefinite" begin="3s"/>
+  </circle>
+  <circle cx="760" cy="140" r="1" fill="#3dd68c" opacity="0">
+    <animate attributeName="opacity" values="0;0.5;0" dur="3.5s" repeatCount="indefinite" begin="1.5s"/>
+  </circle>
+</svg>

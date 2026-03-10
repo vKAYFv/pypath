@@ -2,18 +2,9 @@
 
 <br/>
 
-```
-██████╗ ██╗   ██╗██████╗  █████╗ ████████╗██╗  ██╗
-██╔══██╗╚██╗ ██╔╝██╔══██╗██╔══██╗╚══██╔══╝██║  ██║
-██████╔╝ ╚████╔╝ ██████╔╝███████║   ██║   ███████║
-██╔═══╝   ╚██╔╝  ██╔═══╝ ██╔══██║   ██║   ██╔══██║
-██║        ██║   ██║     ██║  ██║   ██║   ██║  ██║
-╚═╝        ╚═╝   ╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
-```
+<img src="docs/hero.svg" alt="PyPath" width="800"/>
 
-### Бесплатный интерактивный курс Python прямо в браузере
-
-<br/>
+<br/><br/>
 
 [![Open Platform](https://img.shields.io/badge/▶%20%20Открыть%20платформу-f7c948?style=for-the-badge&logoColor=000000&labelColor=1a1a1a)](https://vkayfv.github.io/pypath/)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-deployed-3dd68c?style=for-the-badge&logo=github&logoColor=white&labelColor=1a1a1a)](https://vkayfv.github.io/pypath/)
@@ -32,11 +23,11 @@
 
 ## 🚀 Что это такое
 
-**PyPath** — это интерактивная обучающая платформа для изучения Python с нуля.  
+**PyPath** — интерактивная платформа для изучения Python с нуля.  
 Никаких установок, никакой регистрации — открываешь браузер и пишешь код.
 
 > Python запускается прямо в браузере через **Brython** — никаких серверов.  
-> Твой прогресс сохраняется локально в браузере.
+> Прогресс сохраняется локально в браузере.
 
 ---
 
@@ -56,16 +47,16 @@
 ## 📚 Программа курса
 
 ```
-01 ▸ Основы Python      — переменные, условия, циклы         (8 задач)
-02 ▸ Строки             — методы, срезы, форматирование       (9 задач)
-03 ▸ Списки и кортежи   — коллекции, comprehension            (8 задач)
+01 ▸ Основы Python       — переменные, условия, циклы        (8 задач)
+02 ▸ Строки              — методы, срезы, форматирование      (9 задач)
+03 ▸ Списки и кортежи    — коллекции, comprehension           (8 задач)
 04 ▸ Словари и множества — dict, set, вложенные структуры     (7 задач)
-05 ▸ Функции            — def, lambda, декораторы             (6 задач)
-06 ▸ ООП                — классы, наследование                (3 задачи)
-07 ▸ Файлы и исключения — I/O, try/except, json               (скоро)
-08 ▸ Модули и пакеты    — import, pip, stdlib                 (скоро)
-09 ▸ Проект: TODO CLI   — полноценное CLI приложение          (скоро)
-10 ▸ Проект: Парсер     — requests + BeautifulSoup            (скоро)
+05 ▸ Функции             — def, lambda, декораторы            (6 задач)
+06 ▸ ООП                 — классы, наследование               (3 задачи)
+07 ▸ Файлы и исключения  — I/O, try/except, json              (скоро)
+08 ▸ Модули и пакеты     — import, pip, stdlib                (скоро)
+09 ▸ Проект: TODO CLI    — полноценное CLI приложение         (скоро)
+10 ▸ Проект: Парсер      — requests + BeautifulSoup           (скоро)
 ```
 
 ---
@@ -81,31 +72,27 @@
 
 ## 🛠️ Технологии
 
-- **[Brython](https://brython.info/)** — Python в браузере (WebAssembly)
+- **[Brython](https://brython.info/)** — Python в браузере
 - **[Highlight.js](https://highlightjs.org/)** — подсветка синтаксиса
 - **[GitHub Pages](https://pages.github.com/)** — хостинг
 
 ---
 
-## 📁 Структура репозитория
+## 📁 Структура
 
 ```
 pypath/
 ├── docs/
-│   └── index.html          ← вся платформа (single-file SPA)
+│   ├── index.html     ← платформа (single-file SPA)
+│   └── hero.svg       ← анимированное лого
+├── modules/           ← исходники курса
 └── README.md
 ```
 
 ---
 
-## 🤝 Контрибьют
-
-Нашёл ошибку или хочешь добавить задачу? Открывай [Issue](../../issues) или [Pull Request](../../pulls).
-
----
-
 <div align="center">
 
-Made with 🖤 · [vKAYFv](https://github.com/vKAYFv)
+Made with 🖤 by [vKAYFv](https://github.com/vKAYFv)
 
 </div>
