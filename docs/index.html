@@ -1,0 +1,2608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyPath — Курс Python с нуля</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+
+<style>
+/* ── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0d0d0f;
+  --bg2:        #111114;
+  --bg3:        #18181c;
+  --border:     #2a2a30;
+  --border2:    #353540;
+  --text:       #e8e8f0;
+  --text2:      #9090a8;
+  --text3:      #5a5a72;
+  --accent:     #f7c948;
+  --accent2:    #e8a020;
+  --green:      #3dd68c;
+  --green2:     #1a6640;
+  --red:        #f25f5c;
+  --blue:       #5b9cf6;
+  --purple:     #a78bfa;
+  --radius:     10px;
+  --font-mono:  'JetBrains Mono', monospace;
+  --font-head:  'Unbounded', sans-serif;
+  --font-body:  'Inter', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SIDEBAR ──────────────────────────────────────────── */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+/* Progress bar */
+.progress-wrap {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* Module list */
+.module-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.module-list::-webkit-scrollbar { width: 4px; }
+.module-list::-webkit-scrollbar-track { background: transparent; }
+.module-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.module-item {
+  padding: 10px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.module-item:hover { background: var(--bg3); }
+
+.module-item.active {
+  background: var(--bg3);
+  border-left-color: var(--accent);
+}
+
+.module-item.done .module-num { background: var(--green2); color: var(--green); }
+.module-item.locked { opacity: 0.4; cursor: not-allowed; }
+
+.module-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.module-item.active .module-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.module-info { flex: 1; min-width: 0; }
+
+.module-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.module-item.active .module-title { color: var(--accent); }
+
+.module-meta {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-top: 1px;
+}
+
+.module-check {
+  color: var(--green);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ── MAIN CONTENT ─────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-spacer { flex: 1; }
+
+.module-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  padding: 4px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+/* Content panels */
+.content { flex: 1; overflow: hidden; display: flex; }
+
+.panel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 36px 48px;
+}
+
+.panel::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.panel.active { display: block; }
+
+/* ── THEORY PANEL ─────────────────────────────────────── */
+.theory-header {
+  margin-bottom: 32px;
+}
+
+.theory-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.theory-title {
+  font-family: var(--font-head);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.theory-desc {
+  margin-top: 10px;
+  color: var(--text2);
+  font-size: 15px;
+}
+
+.theory-body { max-width: 720px; }
+
+.theory-body h2 {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 36px 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.3px;
+}
+
+.theory-body h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 24px 0 10px;
+  font-family: var(--font-mono);
+}
+
+.theory-body p {
+  color: var(--text2);
+  margin-bottom: 14px;
+  line-height: 1.75;
+}
+
+.theory-body ul, .theory-body ol {
+  padding-left: 20px;
+  margin-bottom: 14px;
+  color: var(--text2);
+}
+
+.theory-body li { margin-bottom: 6px; line-height: 1.7; }
+
+.theory-body code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.theory-body pre {
+  margin: 20px 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.code-dots { display: flex; gap: 6px; }
+.code-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dot:nth-child(1) { background: #ff5f57; }
+.code-dot:nth-child(2) { background: #ffbd2e; }
+.code-dot:nth-child(3) { background: #28c840; }
+
+.copy-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.theory-body pre code {
+  display: block;
+  padding: 18px 20px;
+  background: #1a1b26;
+  font-size: 13.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  border: none;
+}
+
+.tip-box {
+  background: rgba(247, 201, 72, 0.06);
+  border: 1px solid rgba(247, 201, 72, 0.2);
+  border-left: 3px solid var(--accent);
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.tip-box strong { color: var(--accent); }
+
+/* ── TASKS PANEL ──────────────────────────────────────── */
+.tasks-panel { padding: 0 !important; display: flex !important; }
+
+.tasks-left {
+  width: 380px;
+  min-width: 380px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.tasks-left::-webkit-scrollbar { width: 4px; }
+.tasks-left::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.tasks-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.task-card:hover { border-color: var(--border2); }
+.task-card.active { border-color: var(--accent); background: rgba(247,201,72,0.04); }
+.task-card.solved { border-color: var(--green2); }
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.task-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.task-card.active .task-num { border-color: var(--accent); color: var(--accent); }
+.task-card.solved .task-num { border-color: var(--green2); color: var(--green); }
+
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.task-stars {
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.task-desc {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
+}
+
+.task-status {
+  font-size: 12px;
+  color: var(--green);
+  margin-top: 6px;
+  font-family: var(--font-mono);
+}
+
+/* Editor area */
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editor-filename {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.editor-filename span { color: var(--accent); }
+
+.run-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.run-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+.run-btn:active { transform: translateY(0); }
+.run-btn svg { width: 14px; height: 14px; }
+
+.editor-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#code-editor {
+  width: 100%;
+  height: 100%;
+  background: #1a1b26;
+  color: #c0caf5;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  padding: 20px;
+  resize: none;
+  tab-size: 4;
+}
+
+/* Output */
+.output-panel {
+  height: 200px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.output-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.output-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.output-status.idle { color: var(--text3); background: var(--bg3); }
+.output-status.running { color: var(--blue); background: rgba(91,156,246,0.1); }
+.output-status.ok { color: var(--green); background: rgba(61,214,140,0.1); }
+.output-status.err { color: var(--red); background: rgba(242,95,92,0.1); }
+
+#output-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+
+#output-content::-webkit-scrollbar { width: 4px; }
+#output-content::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.out-line { display: block; }
+.out-line.success { color: var(--green); }
+.out-line.error { color: var(--red); }
+.out-line.info { color: var(--blue); }
+.out-line.test-pass { color: var(--green); }
+.out-line.test-fail { color: var(--red); }
+
+/* ── PROGRESS PANEL ───────────────────────────────────── */
+.progress-panel { max-width: 800px; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-head);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+
+.modules-progress { }
+
+.prog-section-title {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 16px;
+  letter-spacing: -0.3px;
+}
+
+.module-prog-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.module-prog-name {
+  width: 200px;
+  font-size: 13px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.module-prog-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.module-prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #2af598);
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+.module-prog-pct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text3);
+  width: 40px;
+  text-align: right;
+}
+
+/* ── NOTIFICATIONS ────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+  max-width: 320px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green2); color: var(--green); }
+.toast.error { border-color: #5a1a1a; color: var(--red); }
+
+/* ── CONFETTI ─────────────────────────────────────────── */
+.confetti-piece {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: confetti-fall 1.5s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── SCROLLBAR global ─────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { width: 220px; min-width: 220px; }
+  .panel { padding: 24px; }
+  .tasks-left { width: 300px; min-width: 300px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">PyPath</div>
+      <div class="logo-sub">// курс Python с нуля</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Прогресс</span>
+        <span id="prog-text">0 / 10</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="module-list" id="module-list"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" data-tab="theory" onclick="switchTab('theory')">📖 Теория</div>
+      <div class="tab" data-tab="tasks" onclick="switchTab('tasks')">🏋️ Задачи</div>
+      <div class="tab" data-tab="progress" onclick="switchTab('progress')">📊 Прогресс</div>
+      <div class="tab-spacer"></div>
+      <div class="module-badge" id="module-badge">Модуль 01</div>
+    </div>
+
+    <div class="content">
+      <!-- THEORY -->
+      <div class="panel active" id="panel-theory">
+        <div id="theory-content"></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="panel tasks-panel" id="panel-tasks">
+        <div class="tasks-left" id="tasks-list"></div>
+        <div class="tasks-right">
+          <div class="editor-header">
+            <div class="editor-filename">tasks.py — <span id="active-task-name">выбери задачу</span></div>
+            <button class="run-btn" onclick="runCode()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              Запустить
+            </button>
+          </div>
+          <div class="editor-wrap">
+            <textarea id="code-editor" spellcheck="false" placeholder="# Выбери задачу слева и напиши код здесь..."></textarea>
+          </div>
+          <div class="output-panel">
+            <div class="output-header">
+              <div class="output-title">Вывод</div>
+              <div class="output-status idle" id="output-status">idle</div>
+            </div>
+            <div id="output-content"><span class="out-line info">// Запусти код чтобы увидеть результат</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="panel" id="panel-progress">
+        <div class="progress-panel">
+          <div style="margin-bottom:32px">
+            <div class="theory-label">Статистика</div>
+            <div class="theory-title">Твой прогресс</div>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+          <div class="modules-progress">
+            <div class="prog-section-title">По модулям</div>
+            <div id="modules-progress-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// COURSE DATA
+// ══════════════════════════════════════════════════════
+const MODULES = [
+  {
+    id: 1,
+    title: "Основы Python",
+    meta: "8 задач • ~1 час",
+    theory: `
+<div class="theory-header">
+  <div class="theory-label">Модуль 01</div>
+  <div class="theory-title">Основы Python</div>
+  <div class="theory-desc">Переменные, типы данных, условия, циклы — фундамент всего остального.</div>
+</div>
+<div class="theory-body">
+
+<h2>1.1 Вывод на экран</h2>
+<p>Функция <code>print()</code> выводит текст в консоль. Это первое что ты напишешь.</p>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">print("Hello, World!")
+print("Python", "is", "great")           # несколько аргументов
+print("one", "two", "three", sep="-")    # разделитель → one-two-three
+print("no newline", end=" ")             # без переноса строки
+print("continues here")</code></pre>
+
+<h2>1.2 Переменные</h2>
+<p>Переменная — имя, за которым хранится значение. Python определяет тип автоматически.</p>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">name = "Alexander"    # str — строка
+age = 28              # int — целое число
+height = 1.78         # float — дробное число
+is_student = True     # bool — True или False
+
+print(type(name))     # &lt;class 'str'&gt;
+print(type(age))      # &lt;class 'int'&gt;</code></pre>
+
+<div class="tip-box"><strong>⚠️ Важно:</strong> Python чувствителен к регистру — <code>name</code> и <code>Name</code> это разные переменные.</div>
+
+<h2>1.3 Арифметика</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">a, b = 17, 5
+
+print(a + b)   # 22  — сложение
+print(a - b)   # 12  — вычитание
+print(a * b)   # 85  — умножение
+print(a / b)   # 3.4 — деление (всегда float!)
+print(a // b)  # 3   — целочисленное деление
+print(a % b)   # 2   — остаток от деления
+print(a ** b)  # 1419857 — возведение в степень</code></pre>
+
+<h2>1.4 Условия</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">score = 85
+
+if score >= 90:
+    print("A")
+elif score >= 80:
+    print("B")    # ← выполнится это
+elif score >= 70:
+    print("C")
+else:
+    print("F")
+
+# Тернарный оператор — краткая запись
+status = "pass" if score >= 60 else "fail"</code></pre>
+
+<div class="tip-box"><strong>💡 Отступы:</strong> Python использует 4 пробела для обозначения блоков. Без правильных отступов код не работает.</div>
+
+<h2>1.5 Циклы</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python"># for — перебор диапазона
+for i in range(1, 6):
+    print(i)    # 1, 2, 3, 4, 5
+
+# while — пока условие True
+n = 1
+while n <= 5:
+    print(n)
+    n += 1      # n = n + 1
+
+# break — выйти из цикла
+# continue — пропустить итерацию
+for i in range(10):
+    if i == 5:
+        break       # остановились на 5
+    if i % 2 == 0:
+        continue    # пропускаем чётные
+    print(i)        # выведет: 1, 3</code></pre>
+
+</div>`,
+    tasks: [
+      {
+        name: "greeting()",
+        stars: 0,
+        desc: "Верни строку вида: \"Hello, Anna! You are 23 years old.\"",
+        signature: "def greeting(name: str, age: int) -> str:",
+        starter: `def greeting(name: str, age: int) -> str:
+    # Верни строку вида: "Hello, Anna! You are 23 years old."
+    pass
+
+# Тест
+print(greeting("Anna", 23))
+print(greeting("Ivan", 30))`,
+        tests: [
+          { input: ['Anna', 23], expected: 'Hello, Anna! You are 23 years old.' },
+          { input: ['Ivan', 30], expected: 'Hello, Ivan! You are 30 years old.' },
+          { input: ['Masha', 17], expected: 'Hello, Masha! You are 17 years old.' },
+        ],
+        validate: (fn) => {
+          const cases = [['Anna',23,'Hello, Anna! You are 23 years old.'],['Ivan',30,'Hello, Ivan! You are 30 years old.'],['Masha',17,'Hello, Masha! You are 17 years old.']];
+          for (const [n,a,exp] of cases) {
+            const res = fn(n,a);
+            if (res !== exp) return {ok:false, msg:`greeting("${n}", ${a}) → "${res}", ожидалось "${exp}"`};
+          }
+          return {ok:true};
+        }
+      },
+      {
+        name: "is_even()",
+        stars: 0,
+        desc: "Верни True если число чётное, иначе False.",
+        signature: "def is_even(n: int) -> bool:",
+        starter: `def is_even(n: int) -> bool:
+    # Верни True если n чётное
+    pass
+
+print(is_even(4))   # True
+print(is_even(7))   # False
+print(is_even(0))   # True`,
+        validate: (fn) => {
+          for (const n of [0,2,4,100]) if (fn(n) !== true) return {ok:false, msg:`is_even(${n}) должно быть True`};
+          for (const n of [1,3,7,99]) if (fn(n) !== false) return {ok:false, msg:`is_even(${n}) должно быть False`};
+          return {ok:true};
+        }
+      },
+      {
+        name: "calculator()",
+        stars: 0,
+        desc: "Калькулятор: принимает a, b и операцию ('+','-','*','/'), возвращает результат. При /0 вернуть None.",
+        starter: `def calculator(a, b, operation):
+    # Реализуй калькулятор
+    pass
+
+print(calculator(10, 5, "+"))   # 15
+print(calculator(10, 0, "/"))   # None`,
+        validate: (fn) => {
+          if (fn(3,4,'+') !== 7) return {ok:false, msg:'calculator(3,4,"+") должно быть 7'};
+          if (fn(10,2,'/') !== 5) return {ok:false, msg:'calculator(10,2,"/") должно быть 5'};
+          if (fn(10,0,'/') !== null && fn(10,0,'/') !== undefined) return {ok:false, msg:'calculator(10,0,"/") должно быть None'};
+          if (fn(5,6,'*') !== 30) return {ok:false, msg:'calculator(5,6,"*") должно быть 30'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "letter_grade()",
+        stars: 0,
+        desc: "Оценка в букву: 90-100→A, 80-89→B, 70-79→C, 60-69→D, <60→F",
+        starter: `def letter_grade(score: int) -> str:
+    pass
+
+print(letter_grade(95))   # A
+print(letter_grade(82))   # B
+print(letter_grade(55))   # F`,
+        validate: (fn) => {
+          const cases = [[95,'A'],[89,'B'],[75,'C'],[60,'D'],[59,'F'],[0,'F'],[100,'A']];
+          for (const [s,e] of cases) if (fn(s)!==e) return {ok:false,msg:`letter_grade(${s}) → "${fn(s)}", ожидалось "${e}"`};
+          return {ok:true};
+        }
+      },
+      {
+        name: "sum_to()",
+        stars: 0,
+        desc: "Верни сумму от 1 до n включительно. sum_to(5) → 15",
+        starter: `def sum_to(n: int) -> int:
+    pass
+
+print(sum_to(5))    # 15
+print(sum_to(100))  # 5050`,
+        validate: (fn) => {
+          if (fn(1)!==1) return {ok:false,msg:'sum_to(1) должно быть 1'};
+          if (fn(5)!==15) return {ok:false,msg:'sum_to(5) должно быть 15'};
+          if (fn(100)!==5050) return {ok:false,msg:'sum_to(100) должно быть 5050'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "count_even()",
+        stars: 0,
+        desc: "Количество чётных чисел в диапазоне [a, b] включительно.",
+        starter: `def count_even(a: int, b: int) -> int:
+    pass
+
+print(count_even(1, 10))  # 5  (2,4,6,8,10)
+print(count_even(0, 10))  # 6  (0,2,4,6,8,10)`,
+        validate: (fn) => {
+          if (fn(1,10)!==5) return {ok:false,msg:'count_even(1,10) должно быть 5'};
+          if (fn(0,10)!==6) return {ok:false,msg:'count_even(0,10) должно быть 6'};
+          if (fn(1,1)!==0) return {ok:false,msg:'count_even(1,1) должно быть 0'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "fizzbuzz()",
+        stars: 1,
+        desc: "FizzBuzz: список от 1 до n. Делится на 3→Fizz, на 5→Buzz, на 15→FizzBuzz, иначе число.",
+        starter: `def fizzbuzz(n: int) -> list:
+    pass
+
+print(fizzbuzz(15))
+# [1,2,'Fizz',4,'Buzz','Fizz',7,8,'Fizz','Buzz',11,'Fizz',13,14,'FizzBuzz']`,
+        validate: (fn) => {
+          const r = fn(15);
+          if (!Array.isArray(r)) return {ok:false,msg:'Должен вернуть список'};
+          if (r[2]!=='Fizz') return {ok:false,msg:`r[2] должно быть "Fizz", получили "${r[2]}"`};
+          if (r[4]!=='Buzz') return {ok:false,msg:`r[4] должно быть "Buzz"`};
+          if (r[14]!=='FizzBuzz') return {ok:false,msg:`r[14] должно быть "FizzBuzz"`};
+          if (r[0]!==1) return {ok:false,msg:'r[0] должно быть 1'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "triangle()",
+        stars: 2,
+        desc: "Напечатай треугольник из * высотой n строк. Верни строку (не print).",
+        starter: `def triangle(n: int) -> str:
+    # Верни строку, а не print()
+    # n=4 → "*\\n**\\n***\\n****"
+    pass
+
+print(triangle(4))`,
+        validate: (fn) => {
+          const r = fn(4);
+          if (typeof r !== 'string') return {ok:false,msg:'Верни строку, не используй print()'};
+          const lines = r.trim().split('\n');
+          if (lines.length !== 4) return {ok:false,msg:`Должно быть 4 строки, получили ${lines.length}`};
+          for (let i=0;i<4;i++) if (lines[i].trim() !== '*'.repeat(i+1)) return {ok:false,msg:`Строка ${i+1} должна быть "${'*'.repeat(i+1)}"`};
+          return {ok:true};
+        }
+      },
+    ]
+  },
+  {
+    id: 2,
+    title: "Строки",
+    meta: "9 задач • ~1.5 часа",
+    theory: `
+<div class="theory-header">
+  <div class="theory-label">Модуль 02</div>
+  <div class="theory-title">Строки</div>
+  <div class="theory-desc">Строки — самый частый тип данных в реальных задачах. Научись ими управлять.</div>
+</div>
+<div class="theory-body">
+
+<h2>2.1 Индексация и срезы</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">s = "Python"
+#    012345    ← прямые индексы
+#   -6-5-4-3-2-1 ← отрицательные
+
+print(s[0])      # P  — первый символ
+print(s[-1])     # n  — последний символ
+print(s[0:3])    # Pyt
+print(s[2:])     # thon
+print(s[::-1])   # nohtyP — строка наоборот!
+print(len(s))    # 6</code></pre>
+
+<h2>2.2 Основные методы</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">s = "  Hello, World!  "
+
+s.upper()           # "  HELLO, WORLD!  "
+s.lower()           # "  hello, world!  "
+s.strip()           # "Hello, World!"
+s.replace("World", "Python")  # заменить
+s.find("World")     # 9 — индекс, -1 если нет
+s.count("l")        # 3 — количество вхождений
+s.startswith("  H") # True
+s.endswith("  ")    # True</code></pre>
+
+<h2>2.3 Split и Join</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">csv = "apple,banana,orange"
+fruits = csv.split(",")      # ['apple', 'banana', 'orange']
+
+words = "one two three".split()  # по пробелам
+
+# join — склеить список в строку
+print(" | ".join(fruits))    # apple | banana | orange
+print("".join(["a","b","c"])) # abc</code></pre>
+
+<h2>2.4 f-строки</h2>
+<pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">name = "Alice"
+score = 95.5678
+
+print(f"Player: {name}")
+print(f"Score: {score:.2f}")        # 95.57
+print(f"Score: {score:08.2f}")      # 00095.57
+print(f"{'Title':^30}")             # по центру
+print(f"{'Left':<15}|{'Right':>15}")# выравнивание</code></pre>
+
+</div>`,
+    tasks: [
+      {
+        name: "reverse_string()",
+        stars: 0,
+        desc: "Верни строку задом наперёд.",
+        starter: `def reverse_string(s: str) -> str:
+    pass
+
+print(reverse_string("Python"))  # nohtyP
+print(reverse_string("hello"))   # olleh`,
+        validate: (fn) => {
+          if (fn("Python")!=="nohtyP") return {ok:false,msg:'reverse_string("Python") должно быть "nohtyP"'};
+          if (fn("")!=="") return {ok:false,msg:'reverse_string("") должно быть ""'};
+          if (fn("a")!=="a") return {ok:false,msg:'reverse_string("a") должно быть "a"'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "is_palindrome()",
+        stars: 0,
+        desc: "True если строка — палиндром. Игнорировать регистр и пробелы.",
+        starter: `def is_palindrome(s: str) -> bool:
+    pass
+
+print(is_palindrome("racecar"))  # True
+print(is_palindrome("hello"))    # False
+print(is_palindrome("A man a plan a canal Panama"))  # True`,
+        validate: (fn) => {
+          if (fn("racecar")!==true) return {ok:false,msg:'"racecar" — палиндром'};
+          if (fn("level")!==true) return {ok:false,msg:'"level" — палиндром'};
+          if (fn("hello")!==false) return {ok:false,msg:'"hello" — не палиндром'};
+          if (fn("Racecar")!==true) return {ok:false,msg:'Должен игнорировать регистр'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "count_vowels()",
+        stars: 0,
+        desc: "Подсчитай количество гласных (a,e,i,o,u). Регистр не важен.",
+        starter: `def count_vowels(s: str) -> int:
+    pass
+
+print(count_vowels("hello"))   # 2
+print(count_vowels("HELLO"))   # 2
+print(count_vowels("bcdf"))    # 0`,
+        validate: (fn) => {
+          if (fn("hello")!==2) return {ok:false,msg:'count_vowels("hello") = 2'};
+          if (fn("HELLO")!==2) return {ok:false,msg:'Должен игнорировать регистр'};
+          if (fn("bcdf")!==0) return {ok:false,msg:'count_vowels("bcdf") = 0'};
+          if (fn("aeiou")!==5) return {ok:false,msg:'count_vowels("aeiou") = 5'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "title_case()",
+        stars: 0,
+        desc: "Каждое слово с заглавной буквы. \"hello world\" → \"Hello World\"",
+        starter: `def title_case(s: str) -> str:
+    pass
+
+print(title_case("hello world"))      # Hello World
+print(title_case("python is great"))  # Python Is Great`,
+        validate: (fn) => {
+          if (fn("hello world")!=="Hello World") return {ok:false,msg:'"hello world" → "Hello World"'};
+          if (fn("python is great")!=="Python Is Great") return {ok:false,msg:'"python is great" → "Python Is Great"'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "remove_spaces()",
+        stars: 0,
+        desc: "Удали все пробелы из строки.",
+        starter: `def remove_spaces(s: str) -> str:
+    pass
+
+print(remove_spaces("h e l l o"))  # hello`,
+        validate: (fn) => {
+          if (fn("h e l l o")!=="hello") return {ok:false,msg:'"h e l l o" → "hello"'};
+          if (fn("   ")!=="") return {ok:false,msg:'"   " → ""'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "unique_words()",
+        stars: 0,
+        desc: "Список уникальных слов (нижний регистр, порядок первого появления).",
+        starter: `def unique_words(s: str) -> list:
+    pass
+
+print(unique_words("yes no yes maybe no"))
+# ['yes', 'no', 'maybe']`,
+        validate: (fn) => {
+          const r = fn("yes no yes maybe no");
+          if (JSON.stringify(r)!==JSON.stringify(['yes','no','maybe'])) return {ok:false,msg:`Ожидалось ['yes','no','maybe'], получили ${JSON.stringify(r)}`};
+          const r2 = fn("Yes yes YES");
+          if (JSON.stringify(r2)!==JSON.stringify(['yes'])) return {ok:false,msg:'Должен игнорировать регистр'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "acronym()",
+        stars: 0,
+        desc: "Акроним из первых букв каждого слова. \"as soon as possible\" → \"ASAP\"",
+        starter: `def acronym(phrase: str) -> str:
+    pass
+
+print(acronym("as soon as possible"))  # ASAP
+print(acronym("Python Is Great"))      # PIG`,
+        validate: (fn) => {
+          if (fn("as soon as possible")!=="ASAP") return {ok:false,msg:'"as soon as possible" → "ASAP"'};
+          if (fn("Python Is Great")!=="PIG") return {ok:false,msg:'"Python Is Great" → "PIG"'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "censor()",
+        stars: 1,
+        desc: "Замени запрещённые слова звёздочками той же длины.",
+        starter: `def censor(text: str, banned: list) -> str:
+    pass
+
+print(censor("bad word here", ["bad"]))    # *** word here
+print(censor("hello world", ["world"]))    # hello *****`,
+        validate: (fn) => {
+          if (fn("bad word here",["bad"])!=="*** word here") return {ok:false,msg:'"bad" → "***"'};
+          if (fn("hello world",["world"])!=="hello *****") return {ok:false,msg:'"world" → "*****"'};
+          if (fn("hello world",[])!=="hello world") return {ok:false,msg:'Пустой список — строка не меняется'};
+          return {ok:true};
+        }
+      },
+      {
+        name: "generate_password()",
+        stars: 2,
+        desc: "Пароль заданной длины: заглавные + строчные + цифры + !@#$",
+        starter: `import random
+import string
+
+def generate_password(length: int = 12) -> str:
+    pass
+
+print(generate_password(16))`,
+        validate: (fn) => {
+          const p = fn(16);
+          if (typeof p !== 'string') return {ok:false,msg:'Должна вернуть строку'};
+          if (p.length !== 16) return {ok:false,msg:`Длина должна быть 16, получили ${p.length}`};
+          if (!/[A-Z]/.test(p)) return {ok:false,msg:'Нет заглавной буквы'};
+          if (!/[a-z]/.test(p)) return {ok:false,msg:'Нет строчной буквы'};
+          if (!/[0-9]/.test(p)) return {ok:false,msg:'Нет цифры'};
+          return {ok:true};
+        }
+      },
+    ]
+  },
+  {
+    id: 3,
+    title: "Списки и кортежи",
+    meta: "8 задач • ~1.5 часа",
+    theory: `<div class="theory-header"><div class="theory-label">Модуль 03</div><div class="theory-title">Списки и кортежи</div><div class="theory-desc">Коллекции данных — основа любой программы.</div></div><div class="theory-body"><h2>3.1 Списки</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">fruits = ["apple", "banana", "orange"]
+
+# Доступ по индексу
+print(fruits[0])   # apple
+print(fruits[-1])  # orange
+
+# Изменение
+fruits.append("grape")      # добавить в конец
+fruits.insert(1, "mango")   # вставить по индексу
+fruits.remove("banana")     # удалить по значению
+popped = fruits.pop()       # удалить и вернуть последний
+
+# Полезные операции
+print(len(fruits))          # длина
+print("apple" in fruits)    # проверка вхождения
+fruits.sort()               # сортировка
+fruits.reverse()            # разворот</code></pre><h2>3.2 List Comprehension</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python"># Вместо цикла for — в одну строку
+squares = [x**2 for x in range(10)]
+# [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+evens = [x for x in range(20) if x % 2 == 0]
+# [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+
+words = ["hello", "world", "python"]
+upper = [w.upper() for w in words]
+# ['HELLO', 'WORLD', 'PYTHON']</code></pre><h2>3.3 Кортежи</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">point = (10, 20)     # кортеж — неизменяемый список
+x, y = point         # распаковка
+
+rgb = (255, 128, 0)
+r, g, b = rgb
+
+# Кортеж нельзя изменить!
+# point[0] = 5   # TypeError!</code></pre></div>`,
+    tasks: [
+      { name:"flatten()", stars:0, desc:"Объедини список списков в один плоский список. [[1,2],[3,4],[5]] → [1,2,3,4,5]",
+        starter:`def flatten(nested: list) -> list:
+    pass
+
+print(flatten([[1,2],[3,4],[5]]))  # [1,2,3,4,5]`,
+        validate:(fn)=>{const r=fn([[1,2],[3,4],[5]]);if(JSON.stringify(r)!==JSON.stringify([1,2,3,4,5]))return{ok:false,msg:`Ожидалось [1,2,3,4,5], получили ${JSON.stringify(r)}`};return{ok:true};}
+      },
+      { name:"unique()", stars:0, desc:"Верни список без дубликатов, сохраняя порядок. [1,2,1,3,2] → [1,2,3]",
+        starter:`def unique(lst: list) -> list:
+    pass
+
+print(unique([1,2,1,3,2]))  # [1,2,3]`,
+        validate:(fn)=>{const r=fn([1,2,1,3,2]);if(JSON.stringify(r)!==JSON.stringify([1,2,3]))return{ok:false,msg:`Ожидалось [1,2,3]`};return{ok:true};}
+      },
+      { name:"second_largest()", stars:0, desc:"Второй по величине элемент списка.",
+        starter:`def second_largest(lst: list) -> int:
+    pass
+
+print(second_largest([3,1,4,1,5,9,2,6]))  # 6`,
+        validate:(fn)=>{if(fn([3,1,4,1,5,9,2,6])!==6)return{ok:false,msg:'[3,1,4,1,5,9,2,6] → 6'};if(fn([1,2])!==1)return{ok:false,msg:'[1,2] → 1'};return{ok:true};}
+      },
+      { name:"rotate()", stars:0, desc:"Сдвинь список на k позиций вправо. [1,2,3,4,5], k=2 → [4,5,1,2,3]",
+        starter:`def rotate(lst: list, k: int) -> list:
+    pass
+
+print(rotate([1,2,3,4,5], 2))  # [4,5,1,2,3]`,
+        validate:(fn)=>{const r=fn([1,2,3,4,5],2);if(JSON.stringify(r)!==JSON.stringify([4,5,1,2,3]))return{ok:false,msg:`Ожидалось [4,5,1,2,3]`};return{ok:true};}
+      },
+      { name:"chunk()", stars:1, desc:"Разбей список на части по n элементов. ([1..7], 3) → [[1,2,3],[4,5,6],[7]]",
+        starter:`def chunk(lst: list, n: int) -> list:
+    pass
+
+print(chunk([1,2,3,4,5,6,7], 3))  # [[1,2,3],[4,5,6],[7]]`,
+        validate:(fn)=>{const r=fn([1,2,3,4,5,6,7],3);if(JSON.stringify(r)!==JSON.stringify([[1,2,3],[4,5,6],[7]]))return{ok:false,msg:`Ожидалось [[1,2,3],[4,5,6],[7]]`};return{ok:true};}
+      },
+      { name:"running_average()", stars:1, desc:"Бегущее среднее: [1,2,3,4] → [1.0, 1.5, 2.0, 2.5]",
+        starter:`def running_average(lst: list) -> list:
+    pass
+
+print(running_average([1,2,3,4]))  # [1.0, 1.5, 2.0, 2.5]`,
+        validate:(fn)=>{const r=fn([1,2,3,4]);const exp=[1.0,1.5,2.0,2.5];for(let i=0;i<exp.length;i++)if(Math.abs(r[i]-exp[i])>0.001)return{ok:false,msg:`r[${i}] должно быть ${exp[i]}`};return{ok:true};}
+      },
+      { name:"zip_lists()", stars:1, desc:"Объедини два списка в список пар. [1,2,3],[a,b,c] → [[1,a],[2,b],[3,c]]",
+        starter:`def zip_lists(a: list, b: list) -> list:
+    pass
+
+print(zip_lists([1,2,3], ['a','b','c']))
+# [[1,'a'],[2,'b'],[3,'c']]`,
+        validate:(fn)=>{const r=fn([1,2,3],['a','b','c']);if(JSON.stringify(r)!==JSON.stringify([[1,'a'],[2,'b'],[3,'c']]))return{ok:false,msg:'Проверь формат пар'};return{ok:true};}
+      },
+      { name:"matrix_transpose()", stars:2, desc:"Транспонируй матрицу (строки↔столбцы).",
+        starter:`def matrix_transpose(matrix: list) -> list:
+    pass
+
+m = [[1,2,3],[4,5,6],[7,8,9]]
+print(matrix_transpose(m))
+# [[1,4,7],[2,5,8],[3,6,9]]`,
+        validate:(fn)=>{const r=fn([[1,2,3],[4,5,6],[7,8,9]]);const exp=[[1,4,7],[2,5,8],[3,6,9]];if(JSON.stringify(r)!==JSON.stringify(exp))return{ok:false,msg:`Ожидалось ${JSON.stringify(exp)}`};return{ok:true};}
+      },
+    ]
+  },
+  {
+    id: 4, title: "Словари и множества", meta: "7 задач • ~1 час",
+    theory: `<div class="theory-header"><div class="theory-label">Модуль 04</div><div class="theory-title">Словари и множества</div><div class="theory-desc">dict и set — мощнейшие структуры данных Python.</div></div><div class="theory-body"><h2>4.1 Словарь (dict)</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">user = {"name": "Alice", "age": 28, "city": "Moscow"}
+
+# Доступ
+print(user["name"])          # Alice
+print(user.get("email", "")) # "" — безопасный доступ
+
+# Изменение
+user["age"] = 29
+user["email"] = "alice@mail.com"
+
+# Итерация
+for key, value in user.items():
+    print(f"{key}: {value}")
+
+# Полезные методы
+keys = list(user.keys())
+values = list(user.values())
+"name" in user    # True — проверка ключа</code></pre><h2>4.2 Множество (set)</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">a = {1, 2, 3, 4}
+b = {3, 4, 5, 6}
+
+print(a & b)   # {3, 4}     — пересечение
+print(a | b)   # {1,2,3,4,5,6} — объединение
+print(a - b)   # {1, 2}     — разность
+print(a ^ b)   # {1,2,5,6}  — симметричная разность
+
+# Уникальные элементы
+nums = [1,2,2,3,3,3]
+unique = list(set(nums))  # [1, 2, 3]</code></pre></div>`,
+    tasks: [
+      { name:"word_count()", stars:0, desc:"Подсчитай частоту каждого слова в строке.",
+        starter:`def word_count(text: str) -> dict:
+    pass
+
+print(word_count("the cat sat on the mat"))
+# {'the':2,'cat':1,'sat':1,'on':1,'mat':1}`,
+        validate:(fn)=>{const r=fn("the cat sat on the mat");if(r['the']!==2||r['cat']!==1)return{ok:false,msg:"'the' должно быть 2, 'cat' — 1"};return{ok:true};}
+      },
+      { name:"invert_dict()", stars:0, desc:"Поменяй ключи и значения местами. {'a':1,'b':2} → {1:'a',2:'b'}",
+        starter:`def invert_dict(d: dict) -> dict:
+    pass
+
+print(invert_dict({'a':1,'b':2}))  # {1:'a',2:'b'}`,
+        validate:(fn)=>{const r=fn({'a':1,'b':2});if(r[1]!=='a'||r[2]!=='b')return{ok:false,msg:'Проверь инверсию'};return{ok:true};}
+      },
+      { name:"group_by_length()", stars:0, desc:"Сгруппируй слова по длине. ['hi','bye','yo','hey'] → {2:['hi','yo'],3:['bye','hey']}",
+        starter:`def group_by_length(words: list) -> dict:
+    pass
+
+print(group_by_length(['hi','bye','yo','hey']))`,
+        validate:(fn)=>{const r=fn(['hi','bye','yo','hey']);if(!r[2]||!r[2].includes('hi'))return{ok:false,msg:"r[2] должен содержать 'hi'"};if(!r[3]||!r[3].includes('bye'))return{ok:false,msg:"r[3] должен содержать 'bye'"};return{ok:true};}
+      },
+      { name:"common_elements()", stars:0, desc:"Общие элементы двух списков (без дубликатов).",
+        starter:`def common_elements(a: list, b: list) -> list:
+    pass
+
+print(sorted(common_elements([1,2,3,4],[3,4,5,6])))  # [3,4]`,
+        validate:(fn)=>{const r=fn([1,2,3,4],[3,4,5,6]).sort();if(JSON.stringify(r)!==JSON.stringify([3,4]))return{ok:false,msg:'Ожидалось [3,4]'};return{ok:true};}
+      },
+      { name:"most_frequent()", stars:1, desc:"Наиболее часто встречающийся элемент списка.",
+        starter:`def most_frequent(lst: list):
+    pass
+
+print(most_frequent([1,2,2,3,2,1]))  # 2`,
+        validate:(fn)=>{if(fn([1,2,2,3,2,1])!==2)return{ok:false,msg:'[1,2,2,3,2,1] → 2'};return{ok:true};}
+      },
+      { name:"merge_dicts()", stars:1, desc:"Объедини список словарей в один. Если ключ повторяется — суммируй значения.",
+        starter:`def merge_dicts(dicts: list) -> dict:
+    pass
+
+print(merge_dicts([{'a':1,'b':2},{'b':3,'c':4}]))
+# {'a':1,'b':5,'c':4}`,
+        validate:(fn)=>{const r=fn([{'a':1,'b':2},{'b':3,'c':4}]);if(r['b']!==5||r['a']!==1)return{ok:false,msg:"'b' должно быть 5, 'a' — 1"};return{ok:true};}
+      },
+      { name:"anagram_groups()", stars:2, desc:"Сгруппируй слова-анаграммы. ['eat','tea','tan','ate','nat','bat'] → [['eat','tea','ate'],['tan','nat'],['bat']]",
+        starter:`def anagram_groups(words: list) -> list:
+    pass
+
+words = ['eat','tea','tan','ate','nat','bat']
+print(anagram_groups(words))`,
+        validate:(fn)=>{const r=fn(['eat','tea','tan','ate','nat','bat']);if(!Array.isArray(r)||r.length!==3)return{ok:false,msg:'Должно быть 3 группы'};const group1=r.find(g=>g.includes('eat'));if(!group1||!group1.includes('tea')||!group1.includes('ate'))return{ok:false,msg:"eat,tea,ate должны быть в одной группе"};return{ok:true};}
+      },
+    ]
+  },
+  {
+    id: 5, title: "Функции", meta: "8 задач • ~2 часа",
+    theory: `<div class="theory-header"><div class="theory-label">Модуль 05</div><div class="theory-title">Функции</div><div class="theory-desc">Функции — строительные блоки программ. Пишешь один раз — используешь везде.</div></div><div class="theory-body"><h2>5.1 Основы</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">def greet(name: str, greeting: str = "Hello") -> str:
+    return f"{greeting}, {name}!"
+
+print(greet("Alice"))            # Hello, Alice!
+print(greet("Bob", "Hi"))        # Hi, Bob!
+print(greet(greeting="Hey", name="Carl")) # именованный аргумент</code></pre><h2>5.2 *args и **kwargs</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">def sum_all(*args):
+    return sum(args)
+
+print(sum_all(1, 2, 3, 4, 5))  # 15
+
+def describe(**kwargs):
+    for k, v in kwargs.items():
+        print(f"{k} = {v}")
+
+describe(name="Alice", age=28)  # name = Alice / age = 28</code></pre><h2>5.3 Lambda и функции высшего порядка</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">double = lambda x: x * 2
+square = lambda x: x ** 2
+
+nums = [5, 2, 8, 1, 9, 3]
+print(sorted(nums))                    # [1,2,3,5,8,9]
+print(sorted(nums, reverse=True))      # [9,8,5,3,2,1]
+print(list(map(double, nums)))         # [10,4,16,2,18,6]
+print(list(filter(lambda x: x>4, nums))) # [5,8,9]</code></pre><h2>5.4 Декораторы</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">def timer(func):
+    import time
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print(f"Время: {time.time()-start:.4f}s")
+        return result
+    return wrapper
+
+@timer
+def slow_function():
+    time.sleep(0.1)
+
+slow_function()  # Время: 0.1001s</code></pre></div>`,
+    tasks: [
+      { name:"apply_twice()", stars:0, desc:"Применить функцию к значению дважды. apply_twice(double, 3) → 12",
+        starter:`def apply_twice(func, value):
+    pass
+
+double = lambda x: x * 2
+print(apply_twice(double, 3))   # 12
+print(apply_twice(lambda x: x+1, 5))  # 7`,
+        validate:(fn)=>{if(fn(x=>x*2,3)!==12)return{ok:false,msg:'apply_twice(double,3) → 12'};if(fn(x=>x+1,5)!==7)return{ok:false,msg:'apply_twice(x+1,5) → 7'};return{ok:true};}
+      },
+      { name:"compose()", stars:0, desc:"Композиция функций: compose(f,g)(x) = f(g(x))",
+        starter:`def compose(f, g):
+    pass
+
+add1 = lambda x: x + 1
+double = lambda x: x * 2
+add1_then_double = compose(double, add1)
+print(add1_then_double(3))  # (3+1)*2 = 8`,
+        validate:(fn)=>{const f=fn(x=>x*2,x=>x+1);if(f(3)!==8)return{ok:false,msg:'compose(double,add1)(3) → 8'};return{ok:true};}
+      },
+      { name:"memoize()", stars:1, desc:"Кэширующий декоратор — запоминает результаты предыдущих вызовов.",
+        starter:`def memoize(func):
+    pass
+
+@memoize
+def fib(n):
+    if n <= 1:
+        return n
+    return fib(n-1) + fib(n-2)
+
+print(fib(10))  # 55 (быстро!)`,
+        validate:(fn)=>{let calls=0;const mfn=fn(x=>{calls++;return x*2;});mfn(5);mfn(5);mfn(5);if(calls>1)return{ok:false,msg:'Функция должна вызываться только один раз для одного аргумента'};return{ok:true};}
+      },
+      { name:"partial()", stars:1, desc:"Частичное применение функции. partial(add, 5)(3) → 8",
+        starter:`def partial(func, *partial_args):
+    pass
+
+def add(a, b):
+    return a + b
+
+add5 = partial(add, 5)
+print(add5(3))   # 8
+print(add5(10))  # 15`,
+        validate:(fn)=>{const add=(a,b)=>a+b;const add5=fn(add,5);if(add5(3)!==8)return{ok:false,msg:'add5(3) → 8'};if(add5(10)!==15)return{ok:false,msg:'add5(10) → 15'};return{ok:true};}
+      },
+      { name:"flatten_deep()", stars:1, desc:"Рекурсивно выровняй глубоко вложенный список любой глубины.",
+        starter:`def flatten_deep(lst) -> list:
+    pass
+
+print(flatten_deep([1,[2,[3,[4,[5]]]]]))
+# [1,2,3,4,5]`,
+        validate:(fn)=>{const r=fn([1,[2,[3,[4,[5]]]]]);if(JSON.stringify(r)!==JSON.stringify([1,2,3,4,5]))return{ok:false,msg:'Ожидалось [1,2,3,4,5]'};return{ok:true};}
+      },
+      { name:"pipeline()", stars:2, desc:"Передай значение через цепочку функций. pipeline(5, [add1, double, square]) → ((5+1)*2)^2 = 144",
+        starter:`def pipeline(value, funcs: list):
+    pass
+
+add1 = lambda x: x + 1
+double = lambda x: x * 2
+square = lambda x: x ** 2
+
+print(pipeline(5, [add1, double, square]))  # 144`,
+        validate:(fn)=>{const r=fn(5,[x=>x+1,x=>x*2,x=>x**2]);if(r!==144)return{ok:false,msg:`Ожидалось 144, получили ${r}`};return{ok:true};}
+      },
+    ]
+  },
+  {
+    id: 6, title: "ООП", meta: "6 задач • ~2 часа",
+    theory: `<div class="theory-header"><div class="theory-label">Модуль 06</div><div class="theory-title">ООП — Объектно-ориентированное программирование</div><div class="theory-desc">Классы и объекты — способ организовать сложный код.</div></div><div class="theory-body"><h2>6.1 Класс и объект</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">class Dog:
+    # Атрибут класса — общий для всех
+    species = "Canis familiaris"
+
+    def __init__(self, name: str, age: int):
+        # Атрибуты экземпляра
+        self.name = name
+        self.age = age
+
+    def bark(self) -> str:
+        return f"{self.name} says Woof!"
+
+    def __repr__(self) -> str:
+        return f"Dog(name={self.name!r}, age={self.age})"
+
+# Создаём объекты
+rex = Dog("Rex", 3)
+bella = Dog("Bella", 5)
+
+print(rex.bark())    # Rex says Woof!
+print(repr(rex))     # Dog(name='Rex', age=3)</code></pre><h2>6.2 Наследование</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">class Animal:
+    def __init__(self, name):
+        self.name = name
+    def speak(self):
+        raise NotImplementedError
+
+class Cat(Animal):
+    def speak(self):
+        return f"{self.name} says Meow!"
+
+class Duck(Animal):
+    def speak(self):
+        return f"{self.name} says Quack!"
+
+animals = [Cat("Whiskers"), Duck("Donald")]
+for animal in animals:
+    print(animal.speak())  # полиморфизм</code></pre></div>`,
+    tasks: [
+      { name:"Stack", stars:0, desc:"Реализуй класс Stack с методами push(item), pop(), peek(), is_empty(), size().",
+        starter:`class Stack:
+    def __init__(self):
+        pass
+    def push(self, item):
+        pass
+    def pop(self):
+        pass
+    def peek(self):
+        pass
+    def is_empty(self) -> bool:
+        pass
+    def size(self) -> int:
+        pass
+
+s = Stack()
+s.push(1); s.push(2); s.push(3)
+print(s.peek())   # 3
+print(s.pop())    # 3
+print(s.size())   # 2`,
+        validate:(fn)=>{try{const S=fn();const s=new S();s.push(1);s.push(2);if(s.peek()!==2)return{ok:false,msg:'peek() должен вернуть 2'};if(s.pop()!==2)return{ok:false,msg:'pop() должен вернуть 2'};if(s.size()!==1)return{ok:false,msg:'size() должен вернуть 1'};if(s.is_empty()!==false)return{ok:false,msg:'is_empty() → false'};return{ok:true};}catch(e){return{ok:false,msg:e.message};}}
+      },
+      { name:"BankAccount", stars:1, desc:"Класс BankAccount: deposit(amount), withdraw(amount), balance. При недостатке средств — ValueError.",
+        starter:`class BankAccount:
+    def __init__(self, owner: str, initial_balance: float = 0):
+        pass
+    def deposit(self, amount: float):
+        pass
+    def withdraw(self, amount: float):
+        pass
+    @property
+    def balance(self) -> float:
+        pass
+
+acc = BankAccount("Alice", 100)
+acc.deposit(50)
+print(acc.balance)   # 150
+acc.withdraw(30)
+print(acc.balance)   # 120`,
+        validate:(fn)=>{return{ok:true};}
+      },
+      { name:"Vector2D", stars:1, desc:"Класс вектора с операторами + - * (скаляр), magnitude(), __repr__.",
+        starter:`class Vector2D:
+    def __init__(self, x: float, y: float):
+        self.x = x
+        self.y = y
+    def __add__(self, other):
+        pass
+    def __sub__(self, other):
+        pass
+    def __mul__(self, scalar):
+        pass
+    def magnitude(self) -> float:
+        pass
+    def __repr__(self):
+        pass
+
+v1 = Vector2D(1, 2)
+v2 = Vector2D(3, 4)
+print(v1 + v2)     # Vector2D(4, 6)
+print(v1.magnitude())  # 2.236...`,
+        validate:(fn)=>{return{ok:true};}
+      },
+    ]
+  },
+  { id:7, title:"Файлы и исключения", meta:"6 задач • ~1.5 часа", theory:`<div class="theory-header"><div class="theory-label">Модуль 07</div><div class="theory-title">Файлы и исключения</div><div class="theory-desc">Читай и записывай файлы. Обрабатывай ошибки правильно.</div></div><div class="theory-body"><h2>7.1 Работа с файлами</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python"># Запись
+with open("file.txt", "w", encoding="utf-8") as f:
+    f.write("Hello\\n")
+    f.writelines(["line1\\n", "line2\\n"])
+
+# Чтение
+with open("file.txt", "r", encoding="utf-8") as f:
+    content = f.read()      # всё содержимое
+    lines = f.readlines()   # список строк
+
+# JSON
+import json
+data = {"name": "Alice", "age": 28}
+with open("data.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+with open("data.json") as f:
+    loaded = json.load(f)</code></pre><h2>7.2 Исключения</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Деление на ноль!")
+except (TypeError, ValueError) as e:
+    print(f"Ошибка: {e}")
+else:
+    print("Успешно")    # если не было исключений
+finally:
+    print("Всегда")     # выполняется всегда
+
+# Свои исключения
+class InsufficientFunds(Exception):
+    pass
+
+raise InsufficientFunds("Недостаточно средств")</code></pre></div>`, tasks:[] },
+  { id:8, title:"Модули и пакеты", meta:"5 задач • ~1 час", theory:`<div class="theory-header"><div class="theory-label">Модуль 08</div><div class="theory-title">Модули и пакеты</div><div class="theory-desc">Используй чужой код. Стандартная библиотека и pip.</div></div><div class="theory-body"><h2>8.1 import</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import math
+import random
+from datetime import datetime, timedelta
+from collections import Counter, defaultdict
+import os
+import sys
+
+print(math.pi)           # 3.14159...
+print(math.sqrt(16))     # 4.0
+print(random.randint(1, 10))
+
+now = datetime.now()
+tomorrow = now + timedelta(days=1)
+
+words = ["apple","banana","apple","cherry","banana","apple"]
+counter = Counter(words)
+print(counter.most_common(2))  # [('apple',3),('banana',2)]</code></pre><h2>8.2 Установка пакетов</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python"># В терминале:
+# pip install requests
+# pip install beautifulsoup4
+# pip install pandas
+
+import requests
+response = requests.get("https://api.github.com")
+print(response.status_code)   # 200
+data = response.json()        # парсим JSON</code></pre></div>`, tasks:[] },
+  { id:9, title:"Проект: TODO CLI", meta:"Финальный проект", theory:`<div class="theory-header"><div class="theory-label">Проект 01</div><div class="theory-title">TODO CLI приложение</div><div class="theory-desc">Полноценное консольное приложение с хранением данных в JSON файле.</div></div><div class="theory-body"><h2>Что нужно реализовать</h2><ul><li>Добавление задачи: <code>add "купить молоко"</code></li><li>Просмотр всех задач: <code>list</code></li><li>Отметить выполненной: <code>done 1</code></li><li>Удалить задачу: <code>delete 1</code></li><li>Хранение в <code>todos.json</code></li></ul><h2>Структура проекта</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import json
+import sys
+from datetime import datetime
+
+TODOS_FILE = "todos.json"
+
+def load_todos():
+    try:
+        with open(TODOS_FILE) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def save_todos(todos):
+    with open(TODOS_FILE, "w") as f:
+        json.dump(todos, f, indent=2, ensure_ascii=False)
+
+def add_todo(text):
+    todos = load_todos()
+    todos.append({
+        "id": len(todos) + 1,
+        "text": text,
+        "done": False,
+        "created": datetime.now().isoformat()
+    })
+    save_todos(todos)
+    print(f"✅ Добавлено: {text}")
+
+# Запуск: python todo.py add "Купить молоко"
+if __name__ == "__main__":
+    command = sys.argv[1] if len(sys.argv) > 1 else "list"
+    if command == "add":
+        add_todo(" ".join(sys.argv[2:]))
+    elif command == "list":
+        # TODO: реализуй
+        pass</code></pre></div>`, tasks:[] },
+  { id:10, title:"Проект: Парсер", meta:"Финальный проект", theory:`<div class="theory-header"><div class="theory-label">Проект 02</div><div class="theory-title">Веб-парсер</div><div class="theory-desc">Парсим данные с сайтов с помощью requests и BeautifulSoup.</div></div><div class="theory-body"><h2>Основы парсинга</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import requests
+from bs4 import BeautifulSoup
+
+url = "https://news.ycombinator.com"
+response = requests.get(url)
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Найти все заголовки
+titles = soup.find_all("span", class_="titleline")
+for title in titles[:10]:
+    link = title.find("a")
+    print(link.text)
+    print(link.get("href"))
+    print("---")</code></pre><h2>Работа с API</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import requests
+
+# Бесплатное API — курсы валют
+url = "https://api.exchangerate-api.com/v4/latest/USD"
+data = requests.get(url).json()
+
+print(f"1 USD = {data['rates']['RUB']:.2f} RUB")
+print(f"1 USD = {data['rates']['EUR']:.4f} EUR")</code></pre></div>`, tasks:[] },
+];
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+const STATE = {
+  currentModule: 0,
+  currentTask: null,
+  solved: JSON.parse(localStorage.getItem('pypath_solved') || '{}'),
+  // solved[moduleId][taskIdx] = true
+};
+
+function saveState() {
+  localStorage.setItem('pypath_solved', JSON.stringify(STATE.solved));
+}
+
+function isSolved(moduleId, taskIdx) {
+  return !!(STATE.solved[moduleId] && STATE.solved[moduleId][taskIdx]);
+}
+
+function markSolved(moduleId, taskIdx) {
+  if (!STATE.solved[moduleId]) STATE.solved[moduleId] = {};
+  STATE.solved[moduleId][taskIdx] = true;
+  saveState();
+}
+
+// ══════════════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════════════
+function buildSidebar() {
+  const list = document.getElementById('module-list');
+  list.innerHTML = '';
+
+  MODULES.forEach((mod, idx) => {
+    const solvedCount = mod.tasks.filter((_,i) => isSolved(mod.id, i)).length;
+    const total = mod.tasks.length;
+    const allDone = total > 0 && solvedCount === total;
+
+    const item = document.createElement('div');
+    item.className = `module-item${idx === STATE.currentModule ? ' active' : ''}${allDone ? ' done' : ''}`;
+    item.onclick = () => selectModule(idx);
+    item.innerHTML = `
+      <div class="module-num">${String(mod.id).padStart(2,'0')}</div>
+      <div class="module-info">
+        <div class="module-title">${mod.title}</div>
+        <div class="module-meta">${total>0 ? `${solvedCount}/${total} решено` : mod.meta}</div>
+      </div>
+      ${allDone ? '<div class="module-check">✓</div>' : ''}
+    `;
+    list.appendChild(item);
+  });
+
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  let totalTasks = 0, solvedTasks = 0;
+  MODULES.forEach(mod => {
+    totalTasks += mod.tasks.length;
+    mod.tasks.forEach((_,i) => { if (isSolved(mod.id,i)) solvedTasks++; });
+  });
+  const pct = totalTasks > 0 ? Math.round(solvedTasks/totalTasks*100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-text').textContent = `${solvedTasks} / ${totalTasks}`;
+}
+
+// ══════════════════════════════════════════════════════
+// MODULE SELECTION
+// ══════════════════════════════════════════════════════
+function selectModule(idx) {
+  STATE.currentModule = idx;
+  STATE.currentTask = null;
+  buildSidebar();
+  renderTheory();
+  renderTasks();
+  document.getElementById('module-badge').textContent = `Модуль ${String(MODULES[idx].id).padStart(2,'0')}`;
+  // stay on theory tab
+  switchTab('theory');
+}
+
+// ══════════════════════════════════════════════════════
+// THEORY
+// ══════════════════════════════════════════════════════
+function renderTheory() {
+  const mod = MODULES[STATE.currentModule];
+  document.getElementById('theory-content').innerHTML = mod.theory;
+  // highlight code blocks
+  document.querySelectorAll('#theory-content pre code').forEach(el => {
+    hljs.highlightElement(el);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════════════════════
+function renderTasks() {
+  const mod = MODULES[STATE.currentModule];
+  const list = document.getElementById('tasks-list');
+
+  if (mod.tasks.length === 0) {
+    list.innerHTML = `<div style="padding:20px;color:var(--text3);font-size:13px;font-family:var(--font-mono)">// Задачи для этого модуля<br>// появятся скоро...</div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  mod.tasks.forEach((task, idx) => {
+    const solved = isSolved(mod.id, idx);
+    const active = STATE.currentTask === idx;
+    const card = document.createElement('div');
+    card.className = `task-card${active?' active':''}${solved?' solved':''}`;
+    card.onclick = () => selectTask(idx);
+    card.innerHTML = `
+      <div class="task-card-header">
+        <div class="task-num">${String(idx+1).padStart(2,'0')}</div>
+        <div class="task-name">${task.name}</div>
+        ${task.stars > 0 ? `<div class="task-stars">${'⭐'.repeat(task.stars)}</div>` : ''}
+      </div>
+      <div class="task-desc">${task.desc}</div>
+      ${solved ? '<div class="task-status">✓ решено</div>' : ''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+function selectTask(idx) {
+  const mod = MODULES[STATE.currentModule];
+  STATE.currentTask = idx;
+  renderTasks();
+  const task = mod.tasks[idx];
+  document.getElementById('code-editor').value = task.starter;
+  document.getElementById('active-task-name').textContent = task.name;
+  clearOutput();
+  switchTab('tasks');
+}
+
+// ══════════════════════════════════════════════════════
+// CODE EXECUTION (Skulpt — Python in browser)
+// ══════════════════════════════════════════════════════
+function clearOutput() {
+  document.getElementById('output-content').innerHTML = '<span class="out-line info">// Нажми ▶ Запустить</span>';
+  setStatus('idle', 'idle');
+}
+
+function setStatus(cls, text) {
+  const el = document.getElementById('output-status');
+  el.className = 'output-status ' + cls;
+  el.textContent = text;
+}
+
+function appendOutput(text, cls='') {
+  const el = document.getElementById('output-content');
+  if (el.querySelector('.info')) el.innerHTML = '';
+  const line = document.createElement('span');
+  line.className = 'out-line ' + cls;
+  line.textContent = text;
+  el.appendChild(line);
+  el.appendChild(document.createElement('br'));
+  el.scrollTop = el.scrollHeight;
+}
+
+// Use Skulpt for real Python execution
+function runCode() {
+  const code = document.getElementById('code-editor').value;
+  if (!code.trim()) return;
+
+  document.getElementById('output-content').innerHTML = '';
+  setStatus('running', 'running...');
+
+  // Check if Skulpt loaded
+  if (typeof Sk === 'undefined') {
+    appendOutput('⚠️  Python интерпретатор загружается...', 'error');
+    appendOutput('Подожди секунду и попробуй снова.', 'error');
+    setStatus('err', 'error');
+    return;
+  }
+
+  Sk.configure({
+    output: (text) => {
+      text.split('\n').forEach(line => {
+        if (line !== '') appendOutput(line);
+      });
+    },
+    read: (x) => {
+      if (Sk.builtinFiles?.files[x]) return Sk.builtinFiles.files[x];
+      throw new Error("File not found: " + x);
+    },
+    execLimit: 5000,
+  });
+
+  Sk.misceval.asyncToPromise(() =>
+    Sk.importMainWithBody("<stdin>", false, code, true)
+  ).then(() => {
+    setStatus('ok', 'done');
+    // Run validation if task selected
+    runValidation(code);
+  }).catch(err => {
+    appendOutput(err.toString(), 'error');
+    setStatus('err', 'error');
+  });
+}
+
+function runValidation(code) {
+  const mod = MODULES[STATE.currentModule];
+  if (STATE.currentTask === null || !mod.tasks[STATE.currentTask]) return;
+  const task = mod.tasks[STATE.currentTask];
+  if (!task.validate) return;
+
+  // Extract the function from code using JS eval simulation
+  // We run it in Skulpt's namespace... instead use a JS-based approach
+  // Parse and evaluate using Function constructor for JS-compatible tasks
+  try {
+    // Build a JS version test
+    const result = task.validate(evalPythonFunc(code, task));
+    if (result && result.ok) {
+      appendOutput('', '');
+      appendOutput('══════════════════════', 'success');
+      appendOutput('✓  Все тесты пройдены!', 'success');
+      appendOutput('══════════════════════', 'success');
+      markSolved(mod.id, STATE.currentTask);
+      buildSidebar();
+      renderTasks();
+      showToast('✓ Задача решена!', 'success');
+      confetti();
+    } else if (result && !result.ok) {
+      appendOutput('', '');
+      appendOutput('✗  Тест не прошёл: ' + result.msg, 'error');
+    }
+  } catch(e) {
+    // validation error — not critical
+  }
+}
+
+function evalPythonFunc(code, task) {
+  // Convert simple Python functions to JS for validation
+  // This is a simplified approach using Skulpt globals
+  try {
+    const fnName = task.name.replace('()', '');
+    // Use Skulpt to get the function value
+    const testCode = code + `\n__result__ = ${fnName}`;
+    let fn = null;
+
+    // Re-run with function capture
+    let captured = null;
+    const origOutput = Sk.configure;
+
+    Sk.configure({
+      output: () => {},
+      read: (x) => { if(Sk.builtinFiles?.files[x]) return Sk.builtinFiles.files[x]; throw ""; },
+    });
+
+    // We'll use a JS proxy approach
+    // For simple validation, wrap in try
+    return (...args) => {
+      let result = null;
+      let outputLines = [];
+
+      Sk.configure({
+        output: (t) => outputLines.push(t),
+        read: (x) => { if(Sk.builtinFiles?.files[x]) return Sk.builtinFiles.files[x]; throw ""; },
+      });
+
+      // Build call code
+      const callArgs = args.map(a => JSON.stringify(a)).join(', ');
+      const callCode = code + `\n__r__ = ${fnName}(${callArgs})\nprint(__r__)`;
+
+      let syncResult = null;
+      Sk.misceval.asyncToPromise(() =>
+        Sk.importMainWithBody("<stdin>", false, callCode, true)
+      ).then(() => {
+        const lastLine = outputLines[outputLines.length-1];
+        try { syncResult = JSON.parse(lastLine); } catch(e) { syncResult = lastLine?.trim(); }
+      });
+
+      // Since we can't do sync easily, use a different approach
+      return null; // will handle async validation differently
+    };
+  } catch(e) {
+    return () => null;
+  }
+}
+
+// Better validation: run tests asynchronously
+function runValidation(code) {
+  const mod = MODULES[STATE.currentModule];
+  if (STATE.currentTask === null || !mod.tasks[STATE.currentTask]) return;
+  const task = mod.tasks[STATE.currentTask];
+  if (!task.validate) return;
+
+  runTestsAsync(code, task, mod);
+}
+
+async function runTestsAsync(code, task, mod) {
+  if (typeof Sk === 'undefined') return;
+
+  const fnName = task.name.replace('()', '');
+
+  // For each test case, call the function via Skulpt
+  // Build a test runner
+  const testCode = buildTestCode(code, task, fnName);
+  if (!testCode) return;
+
+  let outputLines = [];
+  Sk.configure({
+    output: (t) => outputLines.push(t),
+    read: (x) => { if(Sk.builtinFiles?.files[x]) return Sk.builtinFiles.files[x]; throw ""; },
+    execLimit: 5000,
+  });
+
+  try {
+    await Sk.misceval.asyncToPromise(() =>
+      Sk.importMainWithBody("<stdin>", false, testCode, true)
+    );
+
+    // Parse results
+    const results = outputLines.join('').trim();
+    if (results === 'ALL_PASS') {
+      appendOutput('');
+      appendOutput('══════════════════════', 'success');
+      appendOutput('✓  Все тесты пройдены!', 'success');
+      appendOutput('══════════════════════', 'success');
+      markSolved(mod.id, STATE.currentTask);
+      buildSidebar();
+      renderTasks();
+      showToast('✓ Задача решена!', 'success');
+      confetti();
+    } else {
+      appendOutput('');
+      appendOutput('✗  ' + results, 'error');
+    }
+  } catch(e) {
+    // test runner error
+  }
+}
+
+function buildTestCode(userCode, task, fnName) {
+  if (!task.testCases) {
+    // Use validate function — convert to inline tests
+    return buildInlineTest(userCode, task, fnName);
+  }
+  return null;
+}
+
+function buildInlineTest(userCode, task, fnName) {
+  // Embed test logic directly in Python
+  const tests = getTaskTests(task, fnName);
+  if (!tests) return null;
+  return userCode + '\n' + tests;
+}
+
+function getTaskTests(task, fnName) {
+  const tests = {
+    'greeting': `
+try:
+    r1 = greeting("Anna", 23)
+    assert r1 == "Hello, Anna! You are 23 years old.", f"greeting(Anna,23)='{r1}'"
+    r2 = greeting("Ivan", 30)
+    assert r2 == "Hello, Ivan! You are 30 years old.", f"greeting(Ivan,30)='{r2}'"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'is_even': `
+try:
+    for n in [0,2,4,100]:
+        assert is_even(n) == True, f"is_even({n}) должно быть True, получили {is_even(n)}"
+    for n in [1,3,7,99]:
+        assert is_even(n) == False, f"is_even({n}) должно быть False"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'calculator': `
+try:
+    assert calculator(3,4,"+") == 7, f"calculator(3,4,'+')={calculator(3,4,'+')}, ожидалось 7"
+    assert calculator(10,2,"/") == 5.0, "calculator(10,2,'/')=5.0"
+    assert calculator(5,6,"*") == 30, "calculator(5,6,'*')=30"
+    assert calculator(10,3,"-") == 7, "calculator(10,3,'-')=7"
+    r = calculator(10,0,"/")
+    assert r is None, f"calculator(10,0,'/')=None, получили {r}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'letter_grade': `
+try:
+    cases = [(95,"A"),(89,"B"),(75,"C"),(65,"D"),(55,"F"),(0,"F"),(100,"A")]
+    for score,exp in cases:
+        r = letter_grade(score)
+        assert r == exp, f"letter_grade({score})='{r}', ожидалось '{exp}'"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'sum_to': `
+try:
+    assert sum_to(1)==1, "sum_to(1)=1"
+    assert sum_to(5)==15, "sum_to(5)=15"
+    assert sum_to(10)==55, "sum_to(10)=55"
+    assert sum_to(100)==5050, "sum_to(100)=5050"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'count_even': `
+try:
+    assert count_even(1,10)==5, f"count_even(1,10)={count_even(1,10)}, ожидалось 5"
+    assert count_even(0,10)==6, f"count_even(0,10)={count_even(0,10)}, ожидалось 6"
+    assert count_even(1,1)==0, "count_even(1,1)=0"
+    assert count_even(1,100)==50, "count_even(1,100)=50"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'fizzbuzz': `
+try:
+    r = fizzbuzz(15)
+    assert isinstance(r, list), "Должен вернуть список"
+    assert r[0]==1, f"r[0]={r[0]}, ожидалось 1"
+    assert r[2]=="Fizz", f"r[2]={r[2]}, ожидалось 'Fizz'"
+    assert r[4]=="Buzz", f"r[4]={r[4]}, ожидалось 'Buzz'"
+    assert r[14]=="FizzBuzz", f"r[14]={r[14]}, ожидалось 'FizzBuzz'"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'triangle': `
+try:
+    r = triangle(4)
+    assert r is not None, "Верни строку, а не None (используй return, не print)"
+    lines = r.strip().split("\\n")
+    assert len(lines)==4, f"Должно быть 4 строки, получили {len(lines)}"
+    for i in range(4):
+        assert lines[i].strip()=="*"*(i+1), f"Строка {i+1} должна быть '{'*'*(i+1)}'"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'reverse_string': `
+try:
+    assert reverse_string("Python")=="nohtyP", f"reverse_string('Python')='{reverse_string('Python')}'"
+    assert reverse_string("")=="", "reverse_string('')=''"
+    assert reverse_string("a")=="a", "reverse_string('a')='a'"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'is_palindrome': `
+try:
+    assert is_palindrome("racecar")==True, "racecar — палиндром"
+    assert is_palindrome("level")==True, "level — палиндром"
+    assert is_palindrome("hello")==False, "hello — не палиндром"
+    assert is_palindrome("Racecar")==True, "Должен игнорировать регистр"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'count_vowels': `
+try:
+    assert count_vowels("hello")==2, f"hello → 2, получили {count_vowels('hello')}"
+    assert count_vowels("HELLO")==2, "HELLO → 2 (регистр)"
+    assert count_vowels("bcdf")==0, "bcdf → 0"
+    assert count_vowels("aeiou")==5, "aeiou → 5"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'title_case': `
+try:
+    assert title_case("hello world")=="Hello World", f"'{title_case('hello world')}' != 'Hello World'"
+    assert title_case("python is great")=="Python Is Great", "python is great"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'remove_spaces': `
+try:
+    assert remove_spaces("h e l l o")=="hello", f"'{remove_spaces('h e l l o')}' != 'hello'"
+    assert remove_spaces("   ")=="", "пробелы → пустая строка"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'unique_words': `
+try:
+    r = unique_words("yes no yes maybe no")
+    assert r == ["yes","no","maybe"], f"{r} != ['yes','no','maybe']"
+    r2 = unique_words("Yes yes YES")
+    assert r2 == ["yes"], f"{r2} != ['yes']"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'acronym': `
+try:
+    assert acronym("as soon as possible")=="ASAP", f"'{acronym('as soon as possible')}' != 'ASAP'"
+    assert acronym("Python Is Great")=="PIG", "PIG"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'censor': `
+try:
+    assert censor("bad word here",["bad"])=="*** word here", f"'{censor('bad word here',['bad'])}'"
+    assert censor("hello world",["world"])=="hello *****", "world → *****"
+    assert censor("hello world",[])=="hello world", "пустой список"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'generate_password': `
+try:
+    p = generate_password(16)
+    assert isinstance(p, str), "Должна вернуть строку"
+    assert len(p)==16, f"Длина должна быть 16, получили {len(p)}"
+    assert any(c.isupper() for c in p), "Нет заглавной буквы"
+    assert any(c.islower() for c in p), "Нет строчной буквы"
+    assert any(c.isdigit() for c in p), "Нет цифры"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'flatten': `
+try:
+    r = flatten([[1,2],[3,4],[5]])
+    assert r==[1,2,3,4,5], f"{r} != [1,2,3,4,5]"
+    assert flatten([])==[], "flatten([])=[]"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'unique': `
+try:
+    assert unique([1,2,1,3,2])==[1,2,3], f"{unique([1,2,1,3,2])}"
+    assert unique([1,1,1])==[1], "unique([1,1,1])=[1]"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'second_largest': `
+try:
+    assert second_largest([3,1,4,1,5,9,2,6])==6, f"{second_largest([3,1,4,1,5,9,2,6])} != 6"
+    assert second_largest([1,2])==1, "[1,2] → 1"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'rotate': `
+try:
+    r = rotate([1,2,3,4,5],2)
+    assert r==[4,5,1,2,3], f"{r} != [4,5,1,2,3]"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'chunk': `
+try:
+    r = chunk([1,2,3,4,5,6,7],3)
+    assert r==[[1,2,3],[4,5,6],[7]], f"{r}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'running_average': `
+try:
+    r = running_average([1,2,3,4])
+    assert abs(r[0]-1.0)<0.001, f"r[0]={r[0]}"
+    assert abs(r[1]-1.5)<0.001, f"r[1]={r[1]}"
+    assert abs(r[3]-2.5)<0.001, f"r[3]={r[3]}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'zip_lists': `
+try:
+    r = zip_lists([1,2,3],["a","b","c"])
+    assert r==[[1,"a"],[2,"b"],[3,"c"]], f"{r}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'matrix_transpose': `
+try:
+    r = matrix_transpose([[1,2,3],[4,5,6],[7,8,9]])
+    assert r==[[1,4,7],[2,5,8],[3,6,9]], f"{r}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'word_count': `
+try:
+    r = word_count("the cat sat on the mat")
+    assert r.get("the")==2, f"'the'={r.get('the')}, ожидалось 2"
+    assert r.get("cat")==1, f"'cat'={r.get('cat')}, ожидалось 1"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'invert_dict': `
+try:
+    r = invert_dict({"a":1,"b":2})
+    assert r[1]=="a" and r[2]=="b", f"{r}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'group_by_length': `
+try:
+    r = group_by_length(["hi","bye","yo","hey"])
+    assert "hi" in r[2] and "yo" in r[2], f"r[2]={r.get(2)}"
+    assert "bye" in r[3] and "hey" in r[3], f"r[3]={r.get(3)}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'common_elements': `
+try:
+    r = sorted(common_elements([1,2,3,4],[3,4,5,6]))
+    assert r==[3,4], f"{r} != [3,4]"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'most_frequent': `
+try:
+    assert most_frequent([1,2,2,3,2,1])==2, f"{most_frequent([1,2,2,3,2,1])} != 2"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'merge_dicts': `
+try:
+    r = merge_dicts([{"a":1,"b":2},{"b":3,"c":4}])
+    assert r["b"]==5, f"r['b']={r.get('b')}, ожидалось 5"
+    assert r["a"]==1, f"r['a']={r.get('a')}"
+    assert r["c"]==4, f"r['c']={r.get('c')}"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'apply_twice': `
+try:
+    assert apply_twice(lambda x: x*2, 3)==12, f"apply_twice(double,3)={apply_twice(lambda x:x*2,3)}"
+    assert apply_twice(lambda x: x+1, 5)==7, "apply_twice(+1,5)=7"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'compose': `
+try:
+    f = compose(lambda x: x*2, lambda x: x+1)
+    assert f(3)==8, f"compose(double,add1)(3)={f(3)}, ожидалось 8"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'flatten_deep': `
+try:
+    r = flatten_deep([1,[2,[3,[4,[5]]]]])
+    assert r==[1,2,3,4,5], f"{r} != [1,2,3,4,5]"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+    'pipeline': `
+try:
+    r = pipeline(5, [lambda x: x+1, lambda x: x*2, lambda x: x**2])
+    assert r==144, f"pipeline(5,[+1,*2,^2])={r}, ожидалось 144"
+    print("ALL_PASS")
+except AssertionError as e:
+    print(str(e))
+except Exception as e:
+    print("Ошибка: " + str(e))`,
+  };
+  return tests[fnName] || null;
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id==='panel-'+name));
+  if (name === 'progress') renderProgressPage();
+}
+
+// ══════════════════════════════════════════════════════
+// PROGRESS PAGE
+// ══════════════════════════════════════════════════════
+function renderProgressPage() {
+  let totalTasks=0, solvedTasks=0, totalModules=0, completedModules=0;
+  MODULES.forEach(mod => {
+    if (mod.tasks.length > 0) totalModules++;
+    const solved = mod.tasks.filter((_,i) => isSolved(mod.id,i)).length;
+    solvedTasks += solved;
+    totalTasks += mod.tasks.length;
+    if (mod.tasks.length > 0 && solved === mod.tasks.length) completedModules++;
+  });
+  const pct = totalTasks > 0 ? Math.round(solvedTasks/totalTasks*100) : 0;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${solvedTasks}</div><div class="stat-label">задач решено</div></div>
+    <div class="stat-card"><div class="stat-value">${totalTasks}</div><div class="stat-label">задач всего</div></div>
+    <div class="stat-card"><div class="stat-value">${completedModules}</div><div class="stat-label">модулей завершено</div></div>
+    <div class="stat-card"><div class="stat-value">${pct}%</div><div class="stat-label">прогресс</div></div>
+  `;
+
+  const list = document.getElementById('modules-progress-list');
+  list.innerHTML = '';
+  MODULES.forEach(mod => {
+    if (mod.tasks.length === 0) return;
+    const solved = mod.tasks.filter((_,i) => isSolved(mod.id,i)).length;
+    const pct = Math.round(solved/mod.tasks.length*100);
+    list.innerHTML += `
+      <div class="module-prog-item">
+        <div class="module-prog-name">${String(mod.id).padStart(2,'0')} — ${mod.title}</div>
+        <div class="module-prog-bar"><div class="module-prog-fill" style="width:${pct}%"></div></div>
+        <div class="module-prog-pct">${pct}%</div>
+      </div>
+    `;
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// COPY CODE
+// ══════════════════════════════════════════════════════
+function copyCode(btn) {
+  const code = btn.closest('.theory-body pre').querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════════
+function confetti() {
+  const colors = ['#f7c948','#3dd68c','#5b9cf6','#a78bfa','#f25f5c','#ff9f43'];
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: -10px;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius: ${Math.random()>0.5?'50%':'2px'};
+        animation-duration: ${1+Math.random()}s;
+        animation-delay: ${Math.random()*0.3}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2000);
+    }, i * 30);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runCode();
+  }
+  // Tab in editor
+  if (e.key === 'Tab' && document.activeElement === document.getElementById('code-editor')) {
+    e.preventDefault();
+    const editor = document.getElementById('code-editor');
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    editor.value = editor.value.substring(0,start) + '    ' + editor.value.substring(end);
+    editor.selectionStart = editor.selectionEnd = start + 4;
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+function init() {
+  buildSidebar();
+  renderTheory();
+  renderTasks();
+}
+
+init();
+</script>
+
+<!-- Skulpt: Python in browser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/1.2.0/skulpt-stdlib.js"></script>
+</body>
+</html>
