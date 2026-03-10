@@ -401,7 +401,8 @@ body {
 .tip-box strong { color: var(--accent); }
 
 /* ── TASKS PANEL ──────────────────────────────────────── */
-.tasks-panel { padding: 0 !important; display: flex !important; }
+.tasks-panel { padding: 0 !important; }
+.tasks-panel.active { display: flex !important; }
 
 .tasks-left {
   width: 380px;
@@ -937,9 +938,9 @@ for i in range(10):
     # Верни строку вида: "Hello, Anna! You are 23 years old."
     pass
 
-# Тест — раскомментируй чтобы проверить:
-# print(greeting("Anna", 23))
-# print(greeting("Ivan", 30))`,
+    # Тест — раскомментируй чтобы проверить:
+    # print(greeting("Anna", 23))
+    # print(greeting("Ivan", 30))`,
         tests: [
           { input: ['Anna', 23], expected: 'Hello, Anna! You are 23 years old.' },
           { input: ['Ivan', 30], expected: 'Hello, Ivan! You are 30 years old.' },
@@ -1819,6 +1820,61 @@ function markSolved(moduleId, taskIdx) {
   if (!STATE.solved[moduleId]) STATE.solved[moduleId] = {};
   STATE.solved[moduleId][taskIdx] = true;
   saveState();
+}
+
+let toastTimer = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+
+  document.querySelectorAll('.panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+
+  const target = document.getElementById(`panel-${tab}`);
+  if (target) target.classList.add('active');
+}
+
+async function copyCode(btn) {
+  const codeEl = btn.closest('pre')?.querySelector('code');
+  if (!codeEl) return;
+  const text = codeEl.textContent || '';
+
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = 'copied';
+    setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+  } catch (_) {
+    // Fallback for restrictive clipboard contexts.
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(ta);
+    btn.textContent = 'copied';
+    setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.className = 'toast';
+  if (type) toast.classList.add(type);
+  toast.classList.add('show');
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2200);
 }
 
 // ══════════════════════════════════════════════════════
