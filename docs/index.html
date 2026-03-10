@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
 <!-- Pyodide — настоящий CPython в браузере -->
@@ -1909,12 +1910,27 @@ function selectTask(idx) {
 }
 
 // ══════════════════════════════════════════════════════
-// PYTHON RUNNER — Piston API (реальный CPython на сервере)
+// PYTHON RUNNER — Pyodide (WebAssembly CPython)
+// Грузится ~3-4 сек при первом запуске, потом мгновенно
 // ══════════════════════════════════════════════════════
-// Piston — бесплатный публичный API, никакой регистрации
-// https://github.com/engineer-man/piston
+let pyodide = null;
 
-const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
+async function initPyodide() {
+  const btn = document.querySelector('.run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Загрузка Python...';
+
+  try {
+    pyodide = await loadPyodide({
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/'
+    });
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Запустить';
+  } catch(e) {
+    btn.innerHTML = '❌ Ошибка загрузки';
+    appendOutput('Не удалось загрузить Python: ' + e.message, 'error');
+  }
+}
 
 function clearOutput() {
   document.getElementById('output-content').innerHTML =
@@ -1940,25 +1956,17 @@ function appendOutput(text, cls) {
   el.scrollTop = el.scrollHeight;
 }
 
-async function runPython(code) {
-  const res = await fetch(PISTON_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      language: 'python',
-      version: '3.10.0',
-      files: [{ name: 'main.py', content: code }],
-      stdin: '',
-      args: [],
-      compile_timeout: 10000,
-      run_timeout: 5000,
-    })
-  });
-  if (!res.ok) throw new Error('API недоступен: ' + res.status);
-  return await res.json();
+async function runPythonCode(code) {
+  const outLines = [];
+  pyodide.setStdout({ batched: (s) => s.split('\n').forEach(l => l !== '' && outLines.push({ t: l, err: false })) });
+  pyodide.setStderr({ batched: (s) => s.split('\n').forEach(l => l !== '' && outLines.push({ t: l, err: true })) });
+  await pyodide.runPythonAsync(code);
+  return outLines;
 }
 
 async function runCode() {
+  if (!pyodide) { appendOutput('⏳ Python ещё загружается...', 'info'); return; }
+
   const code = document.getElementById('code-editor').value;
   if (!code.trim()) return;
 
@@ -1968,30 +1976,20 @@ async function runCode() {
   setStatus('running', 'running...');
 
   try {
-    const result = await runPython(code);
-    btn.disabled = false;
-
-    const stdout = (result.run.stdout || '').trimEnd();
-    const stderr = (result.run.stderr || '').trimEnd();
-
-    if (stdout) {
-      stdout.split('\n').forEach(l => appendOutput(l));
-    }
-    if (stderr) {
-      stderr.split('\n').filter(Boolean).forEach(l => appendOutput(l, 'error'));
-    }
-
-    if (result.run.code !== 0 || stderr) {
-      setStatus('err', 'error');
-    } else {
-      setStatus('ok', 'done');
-      runValidation(code);
-    }
+    const lines = await runPythonCode(code);
+    lines.forEach(l => appendOutput(l.t, l.err ? 'error' : ''));
+    const hasErr = lines.some(l => l.err);
+    setStatus(hasErr ? 'err' : 'ok', hasErr ? 'error' : 'done');
+    if (!hasErr) runValidation(code);
   } catch(e) {
-    btn.disabled = false;
-    appendOutput('⚠️  ' + e.message, 'error');
-    appendOutput('Проверь подключение к интернету', 'error');
+    // Красиво форматируем traceback
+    const msg = e.message || String(e);
+    // Берём последние строки — они самые важные
+    const lines = msg.split('\n').filter(l => l.trim());
+    lines.forEach(l => appendOutput(l, 'error'));
     setStatus('err', 'error');
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -2008,12 +2006,13 @@ function runValidation(code) {
 
 async function runTestsAsync(fullCode, mod) {
   try {
-    const result = await runPython(fullCode);
-    const out = (result.run.stdout || '').trim();
-    const lines = out.split('\n');
-    const last = lines[lines.length - 1];
+    const testOut = [];
+    pyodide.setStdout({ batched: (s) => testOut.push(s) });
+    pyodide.setStderr({ batched: () => {} });
+    await pyodide.runPythonAsync(fullCode);
 
-    if (last === 'ALL_PASS') {
+    const result = testOut.join('').trim().split('\n').pop();
+    if (result === 'ALL_PASS') {
       appendOutput('');
       appendOutput('══════════════════════', 'success');
       appendOutput('✓  Все тесты пройдены!', 'success');
@@ -2023,13 +2022,11 @@ async function runTestsAsync(fullCode, mod) {
       renderTasks();
       showToast('✓ Задача решена!', 'success');
       confetti();
-    } else if (last) {
+    } else if (result) {
       appendOutput('');
-      appendOutput('✗  ' + last, 'error');
+      appendOutput('✗  ' + result, 'error');
     }
-  } catch(e) {
-    // тихо — валидация не критична
-  }
+  } catch(e) { /* тихо */ }
 }
 
 function getTaskTests(fnName) {
@@ -2045,7 +2042,7 @@ function getTaskTests(fnName) {
     sum_to:
 `\ntry:\n    assert sum_to(1)==1\n    assert sum_to(5)==15,f"sum_to(5)={sum_to(5)}"\n    assert sum_to(100)==5050\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     count_even:
-`\ntry:\n    assert count_even(1,10)==5,f"={count_even(1,10)}"\n    assert count_even(0,10)==6,f"={count_even(0,10)}"\n    assert count_even(1,1)==0\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+`\ntry:\n    assert count_even(1,10)==5,f"={count_even(1,10)}"\n    assert count_even(0,10)==6\n    assert count_even(1,1)==0\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     fizzbuzz:
 `\ntry:\n    r=fizzbuzz(15)\n    assert isinstance(r,list),"должен вернуть список"\n    assert r[0]==1,f"r[0]={r[0]}"\n    assert r[2]=="Fizz",f"r[2]={r[2]}"\n    assert r[4]=="Buzz",f"r[4]={r[4]}"\n    assert r[14]=="FizzBuzz",f"r[14]={r[14]}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     triangle:
@@ -2135,8 +2132,8 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Tab' && document.activeElement === document.getElementById('code-editor')) {
     e.preventDefault();
     const ed = document.getElementById('code-editor');
-    const s = ed.selectionStart, end = ed.selectionEnd;
-    ed.value = ed.value.substring(0,s)+'    '+ed.value.substring(end);
+    const s = ed.selectionStart, en = ed.selectionEnd;
+    ed.value = ed.value.substring(0,s)+'    '+ed.value.substring(en);
     ed.selectionStart = ed.selectionEnd = s+4;
   }
 });
@@ -2146,8 +2143,7 @@ function init() {
   buildSidebar();
   renderTheory();
   renderTasks();
-  // Кнопка сразу активна — API вызывается по клику
-  document.querySelector('.run-btn').disabled = false;
+  initPyodide();
 }
 
 init();
