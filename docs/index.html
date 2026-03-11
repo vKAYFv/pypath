@@ -1486,7 +1486,7 @@ print(matrix_transpose(m))
     ]
   },
   {
-    id: 4, title: "Словари и множества", meta: "7 задач • ~1 час",
+    id: 4, title: "Словари и множества", meta: "8 задач • ~1 час",
     theory: `<div class="theory-header"><div class="theory-label">Модуль 04</div><div class="theory-title">Словари и множества</div><div class="theory-desc">dict и set — мощнейшие структуры данных Python.</div></div><div class="theory-body"><h2>4.1 Словарь (dict)</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">user = {"name": "Alice", "age": 28, "city": "Moscow"}
 
 # Доступ
@@ -1542,7 +1542,7 @@ print(group_by_length(['hi','bye','yo','hey']))`,
         starter:`def common_elements(a: list, b: list) -> list:
     pass
 
-print(sorted(common_elements([1,2,3,4],[3,4,5,6])))  # [3,4]`,
+# print(sorted(common_elements([1,2,3,4],[3,4,5,6])))  # [3,4]`,
         validate:(fn)=>{const r=fn([1,2,3,4],[3,4,5,6]).sort();if(JSON.stringify(r)!==JSON.stringify([3,4]))return{ok:false,msg:'Ожидалось [3,4]'};return{ok:true};}
       },
       { name:"most_frequent()", stars:1, desc:"Наиболее часто встречающийся элемент списка.",
@@ -1567,6 +1567,13 @@ print(merge_dicts([{'a':1,'b':2},{'b':3,'c':4}]))
 words = ['eat','tea','tan','ate','nat','bat']
 print(anagram_groups(words))`,
         validate:(fn)=>{const r=fn(['eat','tea','tan','ate','nat','bat']);if(!Array.isArray(r)||r.length!==3)return{ok:false,msg:'Должно быть 3 группы'};const group1=r.find(g=>g.includes('eat'));if(!group1||!group1.includes('tea')||!group1.includes('ate'))return{ok:false,msg:"eat,tea,ate должны быть в одной группе"};return{ok:true};}
+      },
+      { name:"set_symmetric_diff()", stars:1, desc:"Верни элементы, которые есть только в одном из множеств (симметрическая разность).",
+        starter:`def set_symmetric_diff(a: set, b: set) -> set:
+    pass
+
+print(set_symmetric_diff({1,2,3}, {3,4,5}))  # {1,2,4,5}`,
+        validate:(fn)=>{const r=fn(new Set([1,2,3]),new Set([3,4,5]));if(!r||r.size!==4)return{ok:false,msg:'Ожидалось 4 элемента'};return{ok:true};}
       },
     ]
   },
@@ -1623,21 +1630,21 @@ print(apply_twice(lambda x: x+1, 5))  # 7`,
 
 add1 = lambda x: x + 1
 double = lambda x: x * 2
-add1_then_double = compose(double, add1)
-print(add1_then_double(3))  # (3+1)*2 = 8`,
+# add1_then_double = compose(double, add1)
+# print(add1_then_double(3))  # (3+1)*2 = 8`,
         validate:(fn)=>{const f=fn(x=>x*2,x=>x+1);if(f(3)!==8)return{ok:false,msg:'compose(double,add1)(3) → 8'};return{ok:true};}
       },
       { name:"memoize()", stars:1, desc:"Кэширующий декоратор — запоминает результаты предыдущих вызовов.",
         starter:`def memoize(func):
     pass
 
-@memoize
-def fib(n):
-    if n <= 1:
-        return n
-    return fib(n-1) + fib(n-2)
-
-print(fib(10))  # 55 (быстро!)`,
+# @memoize
+# def fib(n):
+#     if n <= 1:
+#         return n
+#     return fib(n-1) + fib(n-2)
+#
+# print(fib(10))  # 55 (быстро!)`,
         validate:(fn)=>{let calls=0;const mfn=fn(x=>{calls++;return x*2;});mfn(5);mfn(5);mfn(5);if(calls>1)return{ok:false,msg:'Функция должна вызываться только один раз для одного аргумента'};return{ok:true};}
       },
       { name:"partial()", stars:1, desc:"Частичное применение функции. partial(add, 5)(3) → 8",
@@ -1648,8 +1655,8 @@ def add(a, b):
     return a + b
 
 add5 = partial(add, 5)
-print(add5(3))   # 8
-print(add5(10))  # 15`,
+# print(add5(3))   # 8
+# print(add5(10))  # 15`,
         validate:(fn)=>{const add=(a,b)=>a+b;const add5=fn(add,5);if(add5(3)!==8)return{ok:false,msg:'add5(3) → 8'};if(add5(10)!==15)return{ok:false,msg:'add5(10) → 15'};return{ok:true};}
       },
       { name:"flatten_deep()", stars:1, desc:"Рекурсивно выровняй глубоко вложенный список любой глубины.",
@@ -1671,10 +1678,38 @@ square = lambda x: x ** 2
 print(pipeline(5, [add1, double, square]))  # 144`,
         validate:(fn)=>{const r=fn(5,[x=>x+1,x=>x*2,x=>x**2]);if(r!==144)return{ok:false,msg:`Ожидалось 144, получили ${r}`};return{ok:true};}
       },
+      { name:"make_counter()", stars:1, desc:"Сделай фабрику счётчика: каждый вызов возвращённой функции увеличивает значение на 1.",
+        starter:`def make_counter(start: int = 0):
+    # Верни функцию counter(), которая при каждом вызове
+    # увеличивает внутреннее значение и возвращает его.
+    pass
+
+# c = make_counter(10)
+# print(c())  # 11
+# print(c())  # 12`,
+        validate:(fn)=>{const c=fn(10);if(c()!==11||c()!==12)return{ok:false,msg:'Счётчик должен накапливать состояние'};return{ok:true};}
+      },
+      { name:"retry()", stars:2, desc:"Повтори вызов функции до attempts раз. Верни результат, а при всех неудачах выбрось последнюю ошибку.",
+        starter:`def retry(func, attempts: int = 3):
+    # Вызови func() до attempts раз.
+    # Если получилось — верни результат.
+    # Если каждый раз ошибка — выбрось последнюю.
+    pass
+
+state = {"n": 0}
+def flaky():
+    state["n"] += 1
+    if state["n"] < 3:
+        raise ValueError("boom")
+    return "ok"
+
+print(retry(flaky, attempts=5))  # "ok"`,
+        validate:(fn)=>{let n=0;const flaky=()=>{n++;if(n<3)throw new Error('boom');return 'ok';};if(fn(flaky,5)!=='ok')return{ok:false,msg:'Должно вернуть результат успешной попытки'};return{ok:true};}
+      },
     ]
   },
   {
-    id: 6, title: "ООП", meta: "6 задач • ~2 часа",
+    id: 6, title: "ООП", meta: "8 задач • ~2 часа",
     theory: `<div class="theory-header"><div class="theory-label">Модуль 06</div><div class="theory-title">ООП — Объектно-ориентированное программирование</div><div class="theory-desc">Классы и объекты — способ организовать сложный код.</div></div><div class="theory-body"><h2>6.1 Класс и объект</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">class Dog:
     # Атрибут класса — общий для всех
     species = "Canis familiaris"
@@ -1776,6 +1811,90 @@ print(v1 + v2)     # Vector2D(4, 6)
 print(v1.magnitude())  # 2.236...`,
         validate:(fn)=>{return{ok:true};}
       },
+      { name:"Rectangle", stars:0, desc:"Класс прямоугольника: area(), perimeter(), can_hold(other).",
+        starter:`class Rectangle:
+    def __init__(self, width: float, height: float):
+        pass
+    def area(self) -> float:
+        pass
+    def perimeter(self) -> float:
+        pass
+    def can_hold(self, other) -> bool:
+        pass
+
+r1 = Rectangle(10, 5)
+r2 = Rectangle(6, 4)
+print(r1.area())         # 50
+print(r1.can_hold(r2))   # True`,
+        validate:(fn)=>{return{ok:true};}
+      },
+      { name:"Student", stars:1, desc:"Класс студента: add_grade(score), average_grade(), is_excellent().",
+        starter:`class Student:
+    def __init__(self, name: str):
+        pass
+    def add_grade(self, score: int):
+        pass
+    def average_grade(self) -> float:
+        pass
+    def is_excellent(self) -> bool:
+        pass
+
+s = Student("Anna")
+s.add_grade(5); s.add_grade(4); s.add_grade(5)
+# print(round(s.average_grade(), 2))`,
+        validate:(fn)=>{return{ok:true};}
+      },
+      { name:"Queue", stars:1, desc:"Реализуй очередь FIFO: enqueue, dequeue, peek, is_empty, size.",
+        starter:`class Queue:
+    def __init__(self):
+        pass
+    def enqueue(self, item):
+        pass
+    def dequeue(self):
+        pass
+    def peek(self):
+        pass
+    def is_empty(self) -> bool:
+        pass
+    def size(self) -> int:
+        pass
+
+q = Queue()
+q.enqueue("a"); q.enqueue("b")
+print(q.dequeue())  # a
+print(q.peek())     # b`,
+        validate:(fn)=>{return{ok:true};}
+      },
+      { name:"Temperature", stars:1, desc:"Класс температуры с конвертацией: to_fahrenheit(), from_fahrenheit().",
+        starter:`class Temperature:
+    def __init__(self, celsius: float):
+        pass
+    def to_fahrenheit(self) -> float:
+        pass
+    @classmethod
+    def from_fahrenheit(cls, fahrenheit: float):
+        pass
+
+t = Temperature(0)
+# print(t.to_fahrenheit())  # 32
+# print(Temperature.from_fahrenheit(212).celsius)  # 100`,
+        validate:(fn)=>{return{ok:true};}
+      },
+      { name:"InventoryItem", stars:2, desc:"Товар на складе: total_price(), apply_discount(percent), __repr__.",
+        starter:`class InventoryItem:
+    def __init__(self, name: str, price: float, quantity: int):
+        pass
+    def total_price(self) -> float:
+        pass
+    def apply_discount(self, percent: float):
+        pass
+    def __repr__(self):
+        pass
+
+item = InventoryItem("Keyboard", 100, 2)
+print(item.total_price())  # 200`,
+        validate:(fn)=>{return{ok:true};}
+      },
     ]
   },
   { id:7, title:"Файлы и исключения", meta:"6 задач • ~1.5 часа", theory:`<div class="theory-header"><div class="theory-label">Модуль 07</div><div class="theory-title">Файлы и исключения</div><div class="theory-desc">Читай и записывай файлы. Обрабатывай ошибки правильно.</div></div><div class="theory-body"><h2>7.1 Работа с файлами</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python"># Запись
@@ -1810,7 +1929,67 @@ finally:
 class InsufficientFunds(Exception):
     pass
 
-raise InsufficientFunds("Недостаточно средств")</code></pre></div>`, tasks:[] },
+raise InsufficientFunds("Недостаточно средств")</code></pre></div>`, tasks:[
+      { name:"safe_divide()", stars:0, desc:"Безопасно раздели a на b. Если b=0 — верни None.",
+        starter:`def safe_divide(a: float, b: float):
+    pass
+
+print(safe_divide(10, 2))  # 5.0
+print(safe_divide(10, 0))  # None`
+      },
+      { name:"parse_int()", stars:0, desc:"Преобразуй строку в int. Если нельзя — верни None.",
+        starter:`def parse_int(value: str):
+    pass
+
+print(parse_int("42"))      # 42
+print(parse_int("oops"))    # None`
+      },
+      { name:"read_nonempty_lines()", stars:0, desc:"Из текста верни список непустых строк без пробелов по краям.",
+        starter:`def read_nonempty_lines(text: str) -> list:
+    pass
+
+sample = "  one\\n\\n two \\n   \\nthree\\n"
+print(read_nonempty_lines(sample))  # ["one", "two", "three"]`
+      },
+      { name:"json_get()", stars:1, desc:"Получи значение ключа из JSON-строки. При ошибке парсинга или отсутствии ключа верни default.",
+        starter:`import json
+
+def json_get(json_text: str, key: str, default=None):
+    pass
+
+print(json_get('{"name":"Anna","age":23}', "name"))   # Anna
+print(json_get('{"name":"Anna"}', "age", 0))          # 0`
+      },
+      { name:"validate_age()", stars:1, desc:"Верни True если возраст целое число от 0 до 120, иначе False.",
+        starter:`def validate_age(value) -> bool:
+    pass
+
+print(validate_age(25))     # True
+print(validate_age(-1))     # False
+print(validate_age("25"))   # False`
+      },
+      { name:"count_errors()", stars:1, desc:"Подсчитай, сколько строк лога начинаются с 'ERROR'.",
+        starter:`def count_errors(lines: list) -> int:
+    pass
+
+logs = ["INFO: started", "ERROR: failed", "WARNING: low", "ERROR: timeout"]
+print(count_errors(logs))  # 2`
+      },
+      { name:"split_csv_line()", stars:1, desc:"Разбей CSV-строку по запятым и убери пробелы вокруг полей.",
+        starter:`def split_csv_line(line: str) -> list:
+    pass
+
+print(split_csv_line("  apple, banana ,cherry  "))  # ["apple","banana","cherry"]`
+      },
+      { name:"sum_numbers_from_text()", stars:2, desc:"Найди в строке все целые числа (включая отрицательные) и верни их сумму.",
+        starter:`import re
+
+def sum_numbers_from_text(text: str) -> int:
+    pass
+
+print(sum_numbers_from_text("a=-2, b=15, c=7"))  # 20`
+      },
+    ] },
   { id:8, title:"Модули и пакеты", meta:"5 задач • ~1 час", theory:`<div class="theory-header"><div class="theory-label">Модуль 08</div><div class="theory-title">Модули и пакеты</div><div class="theory-desc">Используй чужой код. Стандартная библиотека и pip.</div></div><div class="theory-body"><h2>8.1 import</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import math
 import random
 from datetime import datetime, timedelta
@@ -1835,7 +2014,75 @@ print(counter.most_common(2))  # [('apple',3),('banana',2)]</code></pre><h2>8.2 
 import requests
 response = requests.get("https://api.github.com")
 print(response.status_code)   # 200
-data = response.json()        # парсим JSON</code></pre></div>`, tasks:[] },
+data = response.json()        # парсим JSON</code></pre></div>`, tasks:[
+      { name:"circle_area()", stars:0, desc:"Вычисли площадь круга по радиусу (используй math.pi).",
+        starter:`import math
+
+def circle_area(radius: float) -> float:
+    pass
+
+# print(round(circle_area(2), 4))  # 12.5664`
+      },
+      { name:"random_token()", stars:0, desc:"Сгенерируй случайный токен длиной length из букв и цифр.",
+        starter:`import random
+import string
+
+def random_token(length: int) -> str:
+    pass
+
+print(random_token(12))  # например: a8Z0xPq3LmN1`
+      },
+      { name:"days_between()", stars:0, desc:"Верни количество дней между датами формата YYYY-MM-DD.",
+        starter:`from datetime import datetime
+
+def days_between(date1: str, date2: str) -> int:
+    pass
+
+print(days_between("2024-01-01", "2024-01-11"))  # 10`
+      },
+      { name:"top_common_words()", stars:1, desc:"Верни n самых частых слов в тексте как список пар (слово, частота).",
+        starter:`import re
+from collections import Counter
+
+def top_common_words(text: str, n: int = 3) -> list:
+    pass
+
+print(top_common_words("cat dog cat bird dog cat", 2))
+# [("cat", 3), ("dog", 2)]`
+      },
+      { name:"normalize_path()", stars:1, desc:"Нормализуй путь: убери лишние ./ и ../ с помощью os.path.normpath.",
+        starter:`import os
+
+def normalize_path(path: str) -> str:
+    pass
+
+print(normalize_path("a/./b/../c"))  # a/c`
+      },
+      { name:"parse_query_params()", stars:1, desc:"Разбери query-параметры URL в словарь. Для повторяющихся ключей бери первое значение.",
+        starter:`from urllib.parse import urlparse, parse_qs
+
+def parse_query_params(url: str) -> dict:
+    pass
+
+print(parse_query_params("https://site.com?a=1&b=2&b=3"))  # {"a":"1","b":"2"}`
+      },
+      { name:"format_bytes()", stars:1, desc:"Преобразуй число байт в строку с единицами B/KB/MB/GB.",
+        starter:`def format_bytes(size: int) -> str:
+    pass
+
+print(format_bytes(500))       # 500 B
+print(format_bytes(2048))      # 2.0 KB
+print(format_bytes(1048576))   # 1.0 MB`
+      },
+      { name:"slugify()", stars:2, desc:"Сделай URL-slug: lowercase, только [a-z0-9-], пробелы/повторы заменяй на '-'.",
+        starter:`import re
+
+def slugify(text: str) -> str:
+    pass
+
+print(slugify("  Hello,   Python World!  "))  # hello-python-world`
+      },
+    ] },
   { id:9, title:"Проект: TODO CLI", meta:"Финальный проект", theory:`<div class="theory-header"><div class="theory-label">Проект 01</div><div class="theory-title">TODO CLI приложение</div><div class="theory-desc">Полноценное консольное приложение с хранением данных в JSON файле.</div></div><div class="theory-body"><h2>Что нужно реализовать</h2><ul><li>Добавление задачи: <code>add "купить молоко"</code></li><li>Просмотр всех задач: <code>list</code></li><li>Отметить выполненной: <code>done 1</code></li><li>Удалить задачу: <code>delete 1</code></li><li>Хранение в <code>todos.json</code></li></ul><h2>Структура проекта</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import json
 import sys
 from datetime import datetime
@@ -1871,7 +2118,69 @@ if __name__ == "__main__":
         add_todo(" ".join(sys.argv[2:]))
     elif command == "list":
         # TODO: реализуй
-        pass</code></pre></div>`, tasks:[] },
+        pass</code></pre></div>`, tasks:[
+      { name:"create_todo()", stars:0, desc:"Создай задачу-словарь по тексту и id.",
+        starter:`def create_todo(todo_id: int, text: str) -> dict:
+    # Формат: {"id": int, "text": str, "done": bool}
+    pass
+
+print(create_todo(1, "Купить молоко"))`
+      },
+      { name:"add_todo()", stars:0, desc:"Добавь новую задачу в список todos с автоматическим id (max+1).",
+        starter:`def add_todo(todos: list, text: str) -> list:
+    pass
+
+todos = [{"id": 1, "text": "A", "done": False}]
+print(add_todo(todos, "B"))`
+      },
+      { name:"mark_done()", stars:0, desc:"Отметь задачу по id как выполненную. Верни True если нашли, иначе False.",
+        starter:`def mark_done(todos: list, todo_id: int) -> bool:
+    pass
+
+todos = [{"id": 1, "text": "A", "done": False}]
+print(mark_done(todos, 1))   # True
+print(todos[0]["done"])      # True`
+      },
+      { name:"delete_todo()", stars:1, desc:"Удаляй задачу по id. Верни True если удалили, иначе False.",
+        starter:`def delete_todo(todos: list, todo_id: int) -> bool:
+    pass
+
+todos = [{"id": 1, "text": "A", "done": False}, {"id": 2, "text": "B", "done": False}]
+print(delete_todo(todos, 1))  # True
+print(todos)                  # [{"id":2,...}]`
+      },
+      { name:"list_open_todos()", stars:1, desc:"Верни список только невыполненных задач (done=False).",
+        starter:`def list_open_todos(todos: list) -> list:
+    pass
+
+todos = [{"id":1,"text":"A","done":True},{"id":2,"text":"B","done":False}]
+print(list_open_todos(todos))`
+      },
+      { name:"todos_to_json()", stars:1, desc:"Преобразуй список задач в JSON-строку (ensure_ascii=False, indent=2).",
+        starter:`import json
+
+def todos_to_json(todos: list) -> str:
+    pass
+
+print(todos_to_json([{"id":1,"text":"A","done":False}]))`
+      },
+      { name:"todos_from_json()", stars:1, desc:"Прочитай JSON-строку в список задач. При ошибке JSON верни пустой список.",
+        starter:`import json
+
+def todos_from_json(data: str) -> list:
+    pass
+
+print(todos_from_json('[{"id":1,"text":"A","done":false}]'))
+print(todos_from_json('oops'))   # []`
+      },
+      { name:"todo_stats()", stars:2, desc:"Верни статистику: {'total': N, 'done': D, 'open': O}.",
+        starter:`def todo_stats(todos: list) -> dict:
+    pass
+
+todos = [{"id":1,"done":True},{"id":2,"done":False},{"id":3,"done":True}]
+print(todo_stats(todos))  # {"total":3,"done":2,"open":1}`
+      },
+    ] },
   { id:10, title:"Проект: Парсер", meta:"Финальный проект", theory:`<div class="theory-header"><div class="theory-label">Проект 02</div><div class="theory-title">Веб-парсер</div><div class="theory-desc">Парсим данные с сайтов с помощью requests и BeautifulSoup.</div></div><div class="theory-body"><h2>Основы парсинга</h2><pre><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span>python</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-python">import requests
 from bs4 import BeautifulSoup
 
@@ -1892,7 +2201,71 @@ url = "https://api.exchangerate-api.com/v4/latest/USD"
 data = requests.get(url).json()
 
 print(f"1 USD = {data['rates']['RUB']:.2f} RUB")
-print(f"1 USD = {data['rates']['EUR']:.4f} EUR")</code></pre></div>`, tasks:[] },
+print(f"1 USD = {data['rates']['EUR']:.4f} EUR")</code></pre></div>`, tasks:[
+      { name:"extract_h1()", stars:0, desc:"Из HTML извлеки содержимое всех тегов <h1> как список строк.",
+        starter:`import re
+
+def extract_h1(html: str) -> list:
+    pass
+
+print(extract_h1("<h1>News</h1><div>x</div><h1>Top</h1>"))  # ["News","Top"]`
+      },
+      { name:"extract_links()", stars:0, desc:"Из HTML достань все href из тегов <a ... href='...'>.",
+        starter:`import re
+
+def extract_links(html: str) -> list:
+    pass
+
+html = '<a href=\"/a\">A</a><a class=\"x\" href=\"https://x.com\">X</a>'
+print(extract_links(html))  # ["/a","https://x.com"]`
+      },
+      { name:"strip_tags()", stars:0, desc:"Удали HTML-теги и верни чистый текст.",
+        starter:`import re
+
+def strip_tags(html: str) -> str:
+    pass
+
+print(strip_tags("<p>Hello <b>world</b>!</p>"))  # Hello world!`
+      },
+      { name:"parse_currency_rate()", stars:1, desc:"Из словаря API верни курс валюты code. Если нет — None.",
+        starter:`def parse_currency_rate(payload: dict, code: str):
+    pass
+
+data = {"base":"USD","rates":{"EUR":0.92,"RUB":91.0}}
+print(parse_currency_rate(data, "EUR"))  # 0.92
+print(parse_currency_rate(data, "GBP"))  # None`
+      },
+      { name:"build_query_url()", stars:1, desc:"Собери URL с query-параметрами из словаря params.",
+        starter:`from urllib.parse import urlencode
+
+def build_query_url(base_url: str, params: dict) -> str:
+    pass
+
+print(build_query_url("https://api.site.com/search", {"q":"python","page":2}))`
+      },
+      { name:"pick_articles()", stars:1, desc:"Из списка статей верни заголовки с просмотрами >= min_views.",
+        starter:`def pick_articles(items: list, min_views: int) -> list:
+    pass
+
+items = [{"title":"A","views":100},{"title":"B","views":30},{"title":"C","views":120}]
+print(pick_articles(items, 80))  # ["A","C"]`
+      },
+      { name:"unique_by_url()", stars:1, desc:"Удали дубли статей по полю url, сохраняя первый вариант.",
+        starter:`def unique_by_url(items: list) -> list:
+    pass
+
+items = [{"url":"/a","title":"A1"},{"url":"/b","title":"B"},{"url":"/a","title":"A2"}]
+print(unique_by_url(items))  # [{"url":"/a","title":"A1"},{"url":"/b","title":"B"}]`
+      },
+      { name:"paginate()", stars:2, desc:"Верни элементы страницы page (с 1) по размеру per_page.",
+        starter:`def paginate(items: list, page: int, per_page: int) -> list:
+    pass
+
+items = list(range(1, 11))
+print(paginate(items, 1, 4))  # [1,2,3,4]
+print(paginate(items, 3, 4))  # [9,10]`
+      },
+    ] },
 ];
 
 // ══════════════════════════════════════════════════════
@@ -2708,6 +3081,92 @@ function getTaskTests(fnName) {
 `\ntry:\n    assert flatten_deep([1,[2,[3,[4,[5]]]]])==[1,2,3,4,5]\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
     pipeline:
 `\ntry:\n    r=pipeline(5,[lambda x:x+1,lambda x:x*2,lambda x:x**2])\n    assert r==144,f"={r}"\n    print("ALL_PASS")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print("Ошибка: "+str(e))`,
+    Stack:
+`\ntry:\n    s=Stack()\n    assert s.is_empty() is True,"Новый стек должен быть пустым"\n    s.push(1); s.push(2); s.push(3)\n    assert s.size()==3,f"size() должно быть 3, получили {s.size()}"\n    assert s.peek()==3,f"peek() должно быть 3, получили {s.peek()}"\n    assert s.pop()==3,f"pop() должно быть 3, получили {s.pop()}"\n    assert s.pop()==2,f"pop() должно быть 2, получили {s.pop()}"\n    assert s.size()==1,f"size() после pop должно быть 1, получили {s.size()}"\n    assert s.is_empty() is False,"Стек не должен быть пустым после одного элемента"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    BankAccount:
+`\ntry:\n    acc=BankAccount(\"Alice\",100)\n    assert abs(acc.balance-100)<1e-9,f\"Стартовый баланс неверный: {acc.balance}\"\n    acc.deposit(50)\n    assert abs(acc.balance-150)<1e-9,f\"После deposit(50) ожидали 150, получили {acc.balance}\"\n    acc.withdraw(30)\n    assert abs(acc.balance-120)<1e-9,f\"После withdraw(30) ожидали 120, получили {acc.balance}\"\n    got_value_error=False\n    try:\n        acc.withdraw(1000)\n    except ValueError:\n        got_value_error=True\n    assert got_value_error,\"При недостатке средств withdraw должен бросать ValueError\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    Vector2D:
+`\ntry:\n    v1=Vector2D(1,2)\n    v2=Vector2D(3,4)\n    s=v1+v2\n    assert hasattr(s,\"x\") and hasattr(s,\"y\"),\"Результат сложения должен быть вектором с x и y\"\n    assert abs(s.x-4)<1e-9 and abs(s.y-6)<1e-9,f\"v1+v2 должно быть (4,6), получили ({s.x},{s.y})\"\n    d=v2-v1\n    assert abs(d.x-2)<1e-9 and abs(d.y-2)<1e-9,f\"v2-v1 должно быть (2,2), получили ({d.x},{d.y})\"\n    m=v1*3\n    assert abs(m.x-3)<1e-9 and abs(m.y-6)<1e-9,f\"v1*3 должно быть (3,6), получили ({m.x},{m.y})\"\n    mag=v1.magnitude()\n    assert abs(mag-(5**0.5))<1e-9,f\"magnitude() для (1,2) должно быть sqrt(5), получили {mag}\"\n    r=repr(v1)\n    assert \"Vector2D\" in r,\"repr должен содержать имя класса Vector2D\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    set_symmetric_diff:
+`\ntry:\n    r=set_symmetric_diff({1,2,3},{3,4,5})\n    assert r=={1,2,4,5},f\"Ожидалось {{1,2,4,5}}, получили {r}\"\n    assert set_symmetric_diff(set(),{1})=={1}\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    make_counter:
+`\ntry:\n    c=make_counter(10)\n    assert c()==11\n    assert c()==12\n    d=make_counter()\n    assert d()==1\n    assert d()==2\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    retry:
+`\ntry:\n    state={\"n\":0}\n    def flaky():\n        state[\"n\"] += 1\n        if state[\"n\"] < 3:\n            raise ValueError(\"boom\")\n        return \"ok\"\n    assert retry(flaky, attempts=5)==\"ok\"\n    def always_fail():\n        raise ValueError(\"x\")\n    got=False\n    try:\n        retry(always_fail, attempts=2)\n    except ValueError:\n        got=True\n    assert got, \"При постоянной ошибке должен пробрасываться ValueError\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    Rectangle:
+`\ntry:\n    r1=Rectangle(10,5)\n    r2=Rectangle(6,4)\n    assert abs(r1.area()-50)<1e-9\n    assert abs(r1.perimeter()-30)<1e-9\n    assert r1.can_hold(r2) is True\n    assert r2.can_hold(r1) is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    Student:
+`\ntry:\n    s=Student(\"Anna\")\n    s.add_grade(5); s.add_grade(4); s.add_grade(5)\n    avg=s.average_grade()\n    assert abs(avg-(14/3))<1e-9,f\"average_grade={avg}\"\n    assert s.is_excellent() is True\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    Queue:
+`\ntry:\n    q=Queue()\n    assert q.is_empty() is True\n    q.enqueue(\"a\"); q.enqueue(\"b\"); q.enqueue(\"c\")\n    assert q.size()==3\n    assert q.peek()==\"a\"\n    assert q.dequeue()==\"a\"\n    assert q.dequeue()==\"b\"\n    assert q.size()==1\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    Temperature:
+`\ntry:\n    t=Temperature(0)\n    assert abs(t.to_fahrenheit()-32)<1e-9\n    t2=Temperature.from_fahrenheit(212)\n    assert abs(t2.celsius-100)<1e-9\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    InventoryItem:
+`\ntry:\n    it=InventoryItem(\"Keyboard\",100,2)\n    assert abs(it.total_price()-200)<1e-9\n    it.apply_discount(10)\n    assert abs(it.total_price()-180)<1e-9,f\"После скидки ожидали 180, получили {it.total_price()}\"\n    assert \"Keyboard\" in repr(it)\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    safe_divide:
+`\ntry:\n    assert safe_divide(10,2)==5\n    assert safe_divide(10,0) is None\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    parse_int:
+`\ntry:\n    assert parse_int(\"42\")==42\n    assert parse_int(\"-7\")==-7\n    assert parse_int(\"oops\") is None\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    read_nonempty_lines:
+`\ntry:\n    text=\"  one\\n\\n two \\n   \\nthree\\n\"\n    assert read_nonempty_lines(text)==[\"one\",\"two\",\"three\"]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    json_get:
+`\ntry:\n    assert json_get('{\"name\":\"Anna\",\"age\":23}',\"name\")==\"Anna\"\n    assert json_get('{\"name\":\"Anna\"}',\"age\",0)==0\n    assert json_get('bad json',\"x\",None) is None\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    validate_age:
+`\ntry:\n    assert validate_age(25) is True\n    assert validate_age(0) is True\n    assert validate_age(120) is True\n    assert validate_age(-1) is False\n    assert validate_age(121) is False\n    assert validate_age(\"25\") is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    count_errors:
+`\ntry:\n    logs=[\"INFO: start\",\"ERROR: fail\",\"WARNING: low\",\"ERROR: timeout\"]\n    assert count_errors(logs)==2\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    split_csv_line:
+`\ntry:\n    assert split_csv_line(\"  apple, banana ,cherry  \")==[\"apple\",\"banana\",\"cherry\"]\n    assert split_csv_line(\"\")==[\"\"]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    sum_numbers_from_text:
+`\ntry:\n    assert sum_numbers_from_text(\"a=-2, b=15, c=7\")==20\n    assert sum_numbers_from_text(\"no numbers\")==0\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    circle_area:
+`\ntry:\n    r=round(circle_area(2),4)\n    assert abs(r-12.5664)<0.0002,f\"circle_area(2)={r}\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    random_token:
+`\ntry:\n    import string\n    t=random_token(12)\n    assert isinstance(t,str)\n    assert len(t)==12,f\"Длина должна быть 12, получили {len(t)}\"\n    allowed=set(string.ascii_letters+string.digits)\n    assert set(t).issubset(allowed),\"Токен должен содержать только буквы и цифры\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    days_between:
+`\ntry:\n    assert days_between(\"2024-01-01\",\"2024-01-11\")==10\n    assert days_between(\"2024-02-01\",\"2024-02-01\")==0\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    top_common_words:
+`\ntry:\n    r=top_common_words(\"cat dog cat bird dog cat\",2)\n    assert r[0][0]==\"cat\" and r[0][1]==3,f\"Первое место должно быть cat:3, получили {r}\"\n    assert r[1][0]==\"dog\" and r[1][1]==2,f\"Второе место должно быть dog:2, получили {r}\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    normalize_path:
+`\ntry:\n    r=normalize_path(\"a/./b/../c\")\n    r=r.replace(\"\\\\\",\"/\")\n    assert r.endswith(\"a/c\"),f\"Ожидался путь, оканчивающийся на a/c, получили {r}\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    parse_query_params:
+`\ntry:\n    r=parse_query_params(\"https://site.com?a=1&b=2&b=3\")\n    assert r.get(\"a\")==\"1\"\n    assert r.get(\"b\")==\"2\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    format_bytes:
+`\ntry:\n    assert format_bytes(500)==\"500 B\"\n    assert format_bytes(2048)==\"2.0 KB\"\n    assert format_bytes(1048576)==\"1.0 MB\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    slugify:
+`\ntry:\n    assert slugify(\"  Hello,   Python World!  \")==\"hello-python-world\"\n    assert slugify(\"A__B   C\")==\"a-b-c\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    create_todo:
+`\ntry:\n    t=create_todo(1,\"Купить молоко\")\n    assert t[\"id\"]==1\n    assert t[\"text\"]==\"Купить молоко\"\n    assert t[\"done\"] is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    add_todo:
+`\ntry:\n    todos=[{\"id\":1,\"text\":\"A\",\"done\":False}]\n    r=add_todo(todos,\"B\")\n    assert len(r)==2\n    assert r[-1][\"id\"]==2 and r[-1][\"text\"]==\"B\" and r[-1][\"done\"] is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    mark_done:
+`\ntry:\n    todos=[{\"id\":1,\"text\":\"A\",\"done\":False}]\n    assert mark_done(todos,1) is True\n    assert todos[0][\"done\"] is True\n    assert mark_done(todos,99) is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    delete_todo:
+`\ntry:\n    todos=[{\"id\":1,\"text\":\"A\",\"done\":False},{\"id\":2,\"text\":\"B\",\"done\":False}]\n    assert delete_todo(todos,1) is True\n    assert len(todos)==1 and todos[0][\"id\"]==2\n    assert delete_todo(todos,99) is False\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    list_open_todos:
+`\ntry:\n    todos=[{\"id\":1,\"done\":True},{\"id\":2,\"done\":False},{\"id\":3,\"done\":False}]\n    r=list_open_todos(todos)\n    assert [x[\"id\"] for x in r]==[2,3]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    todos_to_json:
+`\ntry:\n    s=todos_to_json([{\"id\":1,\"text\":\"A\",\"done\":False}])\n    assert isinstance(s,str)\n    assert '\"id\": 1' in s\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    todos_from_json:
+`\ntry:\n    r=todos_from_json('[{\"id\":1,\"text\":\"A\",\"done\":false}]')\n    assert isinstance(r,list) and len(r)==1 and r[0][\"id\"]==1\n    assert todos_from_json('oops')==[]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    todo_stats:
+`\ntry:\n    todos=[{\"id\":1,\"done\":True},{\"id\":2,\"done\":False},{\"id\":3,\"done\":True}]\n    r=todo_stats(todos)\n    assert r=={\"total\":3,\"done\":2,\"open\":1},f\"Получили {r}\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    extract_h1:
+`\ntry:\n    html=\"<h1>News</h1><div>x</div><h1>Top</h1>\"\n    assert extract_h1(html)==[\"News\",\"Top\"]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    extract_links:
+`\ntry:\n    html='<a href=\"/a\">A</a><a class=\"x\" href=\"https://x.com\">X</a>'\n    assert extract_links(html)==[\"/a\",\"https://x.com\"]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    strip_tags:
+`\ntry:\n    assert strip_tags(\"<p>Hello <b>world</b>!</p>\")==\"Hello world!\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    parse_currency_rate:
+`\ntry:\n    data={\"base\":\"USD\",\"rates\":{\"EUR\":0.92,\"RUB\":91.0}}\n    assert parse_currency_rate(data,\"EUR\")==0.92\n    assert parse_currency_rate(data,\"GBP\") is None\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    build_query_url:
+`\ntry:\n    from urllib.parse import urlparse, parse_qs\n    url=build_query_url(\"https://api.site.com/search\",{\"q\":\"python\",\"page\":2})\n    q=parse_qs(urlparse(url).query)\n    assert q.get(\"q\",[None])[0]==\"python\"\n    assert q.get(\"page\",[None])[0]==\"2\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    pick_articles:
+`\ntry:\n    items=[{\"title\":\"A\",\"views\":100},{\"title\":\"B\",\"views\":30},{\"title\":\"C\",\"views\":120}]\n    assert pick_articles(items,80)==[\"A\",\"C\"]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    unique_by_url:
+`\ntry:\n    items=[{\"url\":\"/a\",\"title\":\"A1\"},{\"url\":\"/b\",\"title\":\"B\"},{\"url\":\"/a\",\"title\":\"A2\"}]\n    r=unique_by_url(items)\n    assert len(r)==2\n    assert r[0][\"title\"]==\"A1\" and r[1][\"title\"]==\"B\"\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
+    paginate:
+`\ntry:\n    items=list(range(1,11))\n    assert paginate(items,1,4)==[1,2,3,4]\n    assert paginate(items,3,4)==[9,10]\n    assert paginate(items,4,4)==[]\n    print(\"ALL_PASS\")\nexcept AssertionError as e: print(str(e))\nexcept Exception as e: print(\"Ошибка: \"+str(e))`,
   };
   return T[fnName] || null;
 }
