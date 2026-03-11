@@ -913,7 +913,7 @@ body {
               <div class="output-title">Вывод</div>
               <div class="output-status idle" id="output-status">idle</div>
             </div>
-            <div id="output-content"><span class="out-line info">// Запусти код чтобы увидеть результат</span></div>
+            <div id="output-content"><span class="out-line info placeholder-line">// Запусти код чтобы увидеть результат</span></div>
           </div>
         </div>
       </div>
@@ -2398,7 +2398,7 @@ function setupCodeEditor() {
 
 function clearOutput() {
   document.getElementById('output-content').innerHTML =
-    '<span class="out-line info">// Нажми ▶ Запустить  (Ctrl+Enter)</span>';
+    '<span class="out-line info placeholder-line">// Нажми ▶ Запустить  (Ctrl+Enter)</span>';
   setStatus('idle', 'idle');
 }
 
@@ -2411,7 +2411,7 @@ function setStatus(cls, text) {
 function appendOutput(text, cls) {
   cls = cls || '';
   const el = document.getElementById('output-content');
-  if (el.querySelector('.info')) el.innerHTML = '';
+  if (el.querySelector('.placeholder-line')) el.innerHTML = '';
   const line = document.createElement('span');
   line.className = 'out-line ' + cls;
   line.textContent = text;
@@ -2502,12 +2502,15 @@ function runValidation(code) {
     return null;
   }
 
-  const marker = `__PYPATH_CHECK_END__${Date.now()}`;
+  const markerSeed = Date.now();
+  const userOutputMarker = `__PYPATH_USER_END__${markerSeed}`;
+  const marker = `__PYPATH_CHECK_END__${markerSeed}`;
   return {
     mod,
     taskIdx,
+    userOutputMarker,
     marker,
-    fullCode: `${code}\n${tests}\nprint("${marker}")`
+    fullCode: `${code}\nprint("${userOutputMarker}")\n${tests}\nprint("${marker}")`
   };
 }
 
@@ -2528,13 +2531,13 @@ async function runCheck() {
   try {
     const payload = runValidation(code);
     if (!payload) return;
-    await runTestsAsync(payload.fullCode, payload.mod, payload.taskIdx, payload.marker);
+    await runTestsAsync(payload.fullCode, payload.mod, payload.taskIdx, payload.userOutputMarker, payload.marker);
   } finally {
     setExecutionState(false);
   }
 }
 
-async function runTestsAsync(fullCode, mod, taskIdx, marker) {
+async function runTestsAsync(fullCode, mod, taskIdx, userOutputMarker, marker) {
   try {
     const result = await runPythonCode(fullCode, 'student_check.py');
     const pureLines = result.lines
@@ -2549,7 +2552,19 @@ async function runTestsAsync(fullCode, mod, taskIdx, marker) {
       return;
     }
 
-    const checkResult = pureLines.length ? pureLines[pureLines.length - 1] : '';
+    const markerIndex = pureLines.indexOf(userOutputMarker);
+    const userOutputLines = markerIndex === -1 ? pureLines : pureLines.slice(0, markerIndex);
+    const testLines = markerIndex === -1 ? [] : pureLines.slice(markerIndex + 1);
+    const checkResult = testLines.length ? testLines[testLines.length - 1] : '';
+
+    appendOutput('════════ Вывод программы ════════', 'info');
+    if (userOutputLines.length === 0) {
+      appendOutput('// (пусто)', 'info');
+    } else {
+      userOutputLines.forEach(line => appendOutput(line, ''));
+    }
+    appendOutput('════════ Результат проверки ════════', 'info');
+
     if (checkResult === 'ALL_PASS') {
       appendOutput('══════════════════════', 'success');
       appendOutput('✓  Все тесты пройдены!', 'success');
