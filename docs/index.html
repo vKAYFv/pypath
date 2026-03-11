@@ -687,6 +687,7 @@ body {
 .output-status.idle { color: var(--text3); background: var(--bg3); }
 .output-status.running { color: var(--blue); background: rgba(91,156,246,0.1); }
 .output-status.ok { color: var(--green); background: rgba(61,214,140,0.1); }
+.output-status.warn { color: var(--accent); background: rgba(255,210,74,0.14); }
 .output-status.err { color: var(--red); background: rgba(242,95,92,0.1); }
 
 #output-content {
@@ -2378,13 +2379,31 @@ function insertNewlineWithIndent(editor) {
   renderEditorDecorations();
 }
 
-function appendBeginnerHintForNone(code, lines) {
-  const hasPass = /\bpass\b/.test(code);
-  if (!hasPass) return;
-  const nonErrorLines = lines.filter(l => !l.err).map(l => l.t.trim()).filter(Boolean);
-  if (nonErrorLines.length > 0 && nonErrorLines.every(l => l === 'None')) {
-    appendOutput('// Подсказка: функция с pass возвращает None. Замени pass на return с ответом.', 'info');
+function getNoneReturnHint(code) {
+  const hasPass = /^\s*pass\s*$/m.test(code);
+  const hasBareReturn = /^\s*return\s*(#.*)?$/m.test(code);
+  const hasReturnWithValue = /^\s*return\s+[^#\s].*$/m.test(code);
+
+  if (hasPass) {
+    return 'функция с pass возвращает None. Замени pass на return с ответом.';
   }
+  if (hasBareReturn) {
+    return 'return без значения тоже возвращает None. Напиши return <значение>.';
+  }
+  if (!hasReturnWithValue && /\bdef\s+\w+\s*\(/.test(code)) {
+    return 'в функции, похоже, нет return со значением. Добавь return с нужным результатом.';
+  }
+  return null;
+}
+
+function appendBeginnerHintForNone(code, lines) {
+  const nonErrorLines = lines.filter(l => !l.err).map(l => l.t.trim()).filter(Boolean);
+  const onlyNone = nonErrorLines.length > 0 && nonErrorLines.every(l => l === 'None');
+  if (onlyNone) {
+    const hint = getNoneReturnHint(code);
+    if (hint) appendOutput('// Подсказка: ' + hint, 'info');
+  }
+  return onlyNone;
 }
 
 function setupCodeEditor() {
@@ -2416,7 +2435,6 @@ function appendOutput(text, cls) {
   line.className = 'out-line ' + cls;
   line.textContent = text;
   el.appendChild(line);
-  el.appendChild(document.createElement('br'));
   el.scrollTop = el.scrollHeight;
 }
 
@@ -2469,10 +2487,27 @@ async function runCode() {
       return;
     }
 
-    if (result.lines.length === 0) appendOutput('// Код выполнен без вывода', 'info');
-    appendBeginnerHintForNone(code, result.lines);
+    const noneHint = getNoneReturnHint(code);
+    let hintedAboutNone = false;
+    if (result.lines.length === 0) {
+      appendOutput('// Код выполнен без вывода. Добавь print(...), чтобы увидеть результат.', 'info');
+      if (!/\bprint\s*\(/.test(code)) {
+        appendOutput('// Для задач обычно нажимай "Проверить" — она валидирует решение тестами.', 'info');
+      }
+      if (noneHint) {
+        appendOutput('// Подсказка: ' + noneHint, 'info');
+        hintedAboutNone = true;
+      }
+    }
+    const onlyNone = appendBeginnerHintForNone(code, result.lines);
     const hasErr = result.lines.some(l => l.err);
-    setStatus(hasErr ? 'err' : 'ok', hasErr ? 'error' : 'done');
+    if (hasErr) {
+      setStatus('err', 'error');
+    } else if (onlyNone || hintedAboutNone) {
+      setStatus('warn', 'returns None');
+    } else {
+      setStatus('ok', 'done');
+    }
     // Автовалидация отключена — используй кнопку "Проверить"
   } catch (e) {
     const errLines = extractReadableError(e);
@@ -2508,6 +2543,7 @@ function runValidation(code) {
   return {
     mod,
     taskIdx,
+    sourceCode: code,
     userOutputMarker,
     marker,
     fullCode: `${code}\nprint("${userOutputMarker}")\n${tests}\nprint("${marker}")`
@@ -2531,13 +2567,13 @@ async function runCheck() {
   try {
     const payload = runValidation(code);
     if (!payload) return;
-    await runTestsAsync(payload.fullCode, payload.mod, payload.taskIdx, payload.userOutputMarker, payload.marker);
+    await runTestsAsync(payload.fullCode, payload.mod, payload.taskIdx, payload.sourceCode, payload.userOutputMarker, payload.marker);
   } finally {
     setExecutionState(false);
   }
 }
 
-async function runTestsAsync(fullCode, mod, taskIdx, userOutputMarker, marker) {
+async function runTestsAsync(fullCode, mod, taskIdx, sourceCode, userOutputMarker, marker) {
   try {
     const result = await runPythonCode(fullCode, 'student_check.py');
     const pureLines = result.lines
@@ -2579,6 +2615,10 @@ async function runTestsAsync(fullCode, mod, taskIdx, userOutputMarker, marker) {
       // Показываем нормальную ошибку
       const msg = checkResult || 'Тесты не вернули результат — проверь, что функция что-то возвращает.';
       appendOutput('✗  ' + msg, 'error');
+      if (/None/.test(msg)) {
+        const hint = getNoneReturnHint(sourceCode);
+        if (hint) appendOutput('// Подсказка: ' + hint, 'info');
+      }
       setStatus('err', 'failed');
     }
   } catch(e) {
